@@ -118,7 +118,7 @@ function disable() {
 //We use this info to set our limits,and assume the data is properly escaped within quotes.
 function parseSpotifyData(data) {
 	if(!data)
-		return "Unable to parse Spotify data."
+		return "What's today's soundtrack?"
 
 	var titleBlock = data.substring(data.indexOf("xesam:title"));
 	var title = titleBlock.split("\"")[2]
@@ -136,6 +136,9 @@ function parseSpotifyData(data) {
 
 	if (title.length > MAX_STRING_LENGTH)
 		title = title.substring(0, MAX_STRING_LENGTH) + "...";
+
+	if (title.includes("xesam") || artist.includes("xesam"))
+		return "Loading..."
 
 	return (title + " - " + artist);
 }
