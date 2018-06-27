@@ -1,0 +1,10 @@
+[default]
+name=Default
+runtime=host
+config-opts=
+run-opts=
+prefix=/home/marcus/.cache/gnome-builder/install/spotifylabel@mheine.se/host
+app-id=
+postbuild=
+prebuild=
+default=true
