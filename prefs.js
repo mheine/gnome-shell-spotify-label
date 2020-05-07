@@ -121,6 +121,26 @@ function buildPrefsWidget() {
     });
     prefsWidget.attach(artistFirstSwitch, 1, 5, 1, 1);
     
+    /* extension-place */
+    let extensionPlaceLabel = new Gtk.Label({
+        label: 'Extension place:',
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(extensionPlaceLabel, 0, 6, 1, 1);
+
+	let options = ['left', 'center', 'right'];
+    let extensionPlaceComboBox = new Gtk.ComboBoxText({
+    	valign: Gtk.Align.END,
+    	halign: Gtk.Align.END,
+    	visible: true
+    });
+    for (let i = 0; i < options.length; i++) {
+      extensionPlaceComboBox.append(options[i],  options[i]);
+    }
+    extensionPlaceComboBox.set_active(options.indexOf(settings.get_string('extension-place')));
+    prefsWidget.attach(extensionPlaceComboBox, 1, 6, 1, 1);
+    
     /* extension-index */
     let extensionIndexLabel = new Gtk.Label({
         label: 'Extension Index:',
@@ -145,6 +165,7 @@ function buildPrefsWidget() {
     settings.bind('refresh-rate', refreshRateEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('friendly-greeting', friendlyGreetingSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('artist-first', artistFirstSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('extension-place', extensionPlaceComboBox, 'text', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('extension-index', extensionIndexEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
 
     return prefsWidget;
