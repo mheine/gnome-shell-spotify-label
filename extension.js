@@ -12,8 +12,10 @@ const Gio = imports.gi.Gio;
 const LEFT_PADDING = 30;
 const MAX_STRING_LENGTH = 40;
 const REFRESH_RATE = 2;
-const FRIENDLY_GREETING = true;
-
+const FRIENDLY_GREETING = false;
+const ARTIST_FIRST = true;
+const EXTENSION_PLACE = "left";
+const EXTENSION_INDEX = 2;
 
 let _httpSession;
 const SpotifyLabel = new Lang.Class({
@@ -30,16 +32,9 @@ const SpotifyLabel = new Lang.Class({
 			x_align: Clutter.ActorAlign.FILL
 		});
 
-		
-		//Ensure that current actor (i.e our label) is not part of any existing layout
-		let dummyBox = new St.BoxLayout();
-		this.actor.reparent(dummyBox);
-		dummyBox.remove_actor(this.actor);
-		dummyBox.destroy();
-
 		// Create a new layout, add the text and add the actor to the layout
 		let topBox = new St.BoxLayout();
-		topBox.add_actor(this.buttonText);
+		topBox.add(this.buttonText);
 		this.actor.add_actor(topBox);
 
 		//Place the actor/label at the "end" (rightmost) position within the left box
@@ -107,7 +102,7 @@ function init() {
 
 function enable() {
 	spMenu = new SpotifyLabel;
-	Main.panel.addToStatusArea('sp-indicator', spMenu)
+   	Main.panel.addToStatusArea('sp-indicator', spMenu, EXTENSION_INDEX, EXTENSION_PLACE)
 }
 
 function disable() {
@@ -141,7 +136,10 @@ function parseSpotifyData(data) {
 	if (title.includes("xesam") || artist.includes("xesam"))
 		return "Loading..."
 
-	return (title + " - " + artist);
+	if (ARTIST_FIRST) {
+    	return (artist + " - " + title);
+  	}
+  	return (title + " - " + artist);
 }
 
 
