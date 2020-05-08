@@ -127,8 +127,6 @@ function enable() {
 }
 
 function onExtensionLocationChanged (settings, key) {
-	log('changed');
-	log(this.lastExtensionPlace);
 	if (this.lastExtensionPlace !== this.settings.get_string('extension-place')
 			|| this.lastExtensionIndex !== this.settings.get_int('extension-index')) {
 				if (this.lastExtensionPlace === 'left') {

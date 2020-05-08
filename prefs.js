@@ -140,8 +140,6 @@ function buildPrefsWidget() {
     }
     extensionPlaceComboBox.set_active(options.indexOf(settings.get_string('extension-place')));
     prefsWidget.attach(extensionPlaceComboBox, 1, 6, 1, 1);
-
-    log(options[extensionPlaceComboBox.get_active()]);
     
     /* extension-index */
     let extensionIndexLabel = new Gtk.Label({
