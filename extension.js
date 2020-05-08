@@ -32,6 +32,12 @@ const SpotifyLabel = new Lang.Class({
 			x_align: Clutter.ActorAlign.FILL
 		});
 
+		// Listen for update of padding in settings
+		this.onLeftPaddingChanged = this.settings.connect(
+			'changed::left-padding',
+			this._leftPaddingChanged.bind(this)
+		);
+
 		// Create a new layout, add the text and add the actor to the layout
 		let topBox = new St.BoxLayout();
 		topBox.add(this.buttonText);
@@ -42,6 +48,11 @@ const SpotifyLabel = new Lang.Class({
 		Main.panel._leftBox.insert_child_at_index(this.actor, children.length)
 
 		this._refresh();
+	},
+
+	// Update left padding of this.buttonText according to new value set in settings
+	_leftPaddingChanged: function() {
+		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px;");
 	},
 
 	//Defind the refreshing function and set the timeout in seconds
@@ -99,16 +110,20 @@ function init() {
 }
 
 function enable() {
+
+	// Load schema
 	gschema = Gio.SettingsSchemaSource.new_from_directory(
         Me.dir.get_child('schemas').get_path(),
         Gio.SettingsSchemaSource.get_default(),
         false
     );
 
+	// Load settings
     settings = new Gio.Settings({
         settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
 	});
 
+	// Mandatory for removing the spMenu from the correct location
 	this.lastExtensionPlace = settings.get_string('extension-place');
 	this.lastExtensionIndex = settings.get_int('extension-index');
 	
@@ -126,6 +141,12 @@ function enable() {
 	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
 }
 
+function disable() {
+	spMenu.stop();
+	spMenu.destroy();
+}
+
+// Removes spMenu from correct location and then adds it to new one
 function onExtensionLocationChanged (settings, key) {
 	if (this.lastExtensionPlace !== this.settings.get_string('extension-place')
 			|| this.lastExtensionIndex !== this.settings.get_int('extension-index')) {
@@ -147,11 +168,6 @@ function onExtensionLocationChanged (settings, key) {
 				}
 			}
 
-}
-
-function disable() {
-	spMenu.stop();
-	spMenu.destroy();
 }
 
 //Spotify uses MIPRIS v2, and as such the metadata fields are prefixed by 'xesam'
