@@ -11,7 +11,7 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST,  EXTENSION_PLACE, EXTENSION_INDEX, gschema;
+let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST,  EXTENSION_PLACE, EXTENSION_INDEX, gschema, lastExtensionPlace, lastExtensionIndex;
 var settings;
 let _httpSession;
 let spMenu;
@@ -24,9 +24,6 @@ const SpotifyLabel = new Lang.Class({
 		this.parent(0.0, "Spotify Label", false);
 
 		this.settings = settings;
-
-		this.lastExtensionPlace = this.settings.get_string('extension-place');
-		this.lastExtensionIndex = this.settings.get_int('extension-index');
 
 		this.buttonText = new St.Label({
 			text: _("Loading..."),
@@ -49,26 +46,6 @@ const SpotifyLabel = new Lang.Class({
 
 	//Defind the refreshing function and set the timeout in seconds
 	_refresh: function () {
-		if (this.lastExtensionPlace !== this.settings.get_string('extension-place')
-			|| this.lastExtensionIndex !== this.settings.get_int('extension-index')) {
-				if (this.lastExtensionPlace === 'left') {
-					Main.panel._leftBox.remove_actor(spMenu.container);
-				} else if (this.lastExtensionPlace === 'center') {
-					Main.panel._centerBox.remove_actor(spMenu.container);
-				} else {
-					Main.panel._rightBox.remove_actor(spMenu.container);
-				}
-				this.lastExtensionPlace = this.settings.get_string('extension-place');
-				this.lastExtensionIndex = this.settings.get_int('extension-index');
-				if (this.lastExtensionPlace === 'left') {
-					Main.panel._leftBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				} else if (this.lastExtensionPlace === 'center') {
-					Main.panel._centerBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				} else {
-					Main.panel._rightBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				}
-			}
-
 		this._loadData(this._refreshUI);
 		this._removeTimeout();
 		this._timeout = Mainloop.timeout_add_seconds(this.settings.get_int('refresh-rate'), Lang.bind(this, this._refresh));
@@ -130,10 +107,48 @@ function enable() {
 
     settings = new Gio.Settings({
         settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
-    });
+	});
+
+	this.lastExtensionPlace = settings.get_string('extension-place');
+	this.lastExtensionIndex = settings.get_int('extension-index');
+	
+	this.onExtensionPlaceChanged = this.settings.connect(
+		'changed::extension-place',
+		this.onExtensionLocationChanged.bind(this)
+	);
+
+	this.onExtensionIndexChanged = this.settings.connect(
+		'changed::extension-index',
+		this.onExtensionLocationChanged.bind(this)
+	);
         
 	spMenu = new SpotifyLabel(settings);
 	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
+}
+
+function onExtensionLocationChanged (settings, key) {
+	log('changed');
+	log(this.lastExtensionPlace);
+	if (this.lastExtensionPlace !== this.settings.get_string('extension-place')
+			|| this.lastExtensionIndex !== this.settings.get_int('extension-index')) {
+				if (this.lastExtensionPlace === 'left') {
+					Main.panel._leftBox.remove_actor(spMenu.container);
+				} else if (this.lastExtensionPlace === 'center') {
+					Main.panel._centerBox.remove_actor(spMenu.container);
+				} else {
+					Main.panel._rightBox.remove_actor(spMenu.container);
+				}
+				this.lastExtensionPlace = this.settings.get_string('extension-place');
+				this.lastExtensionIndex = this.settings.get_int('extension-index');
+				if (this.lastExtensionPlace === 'left') {
+					Main.panel._leftBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				} else if (this.lastExtensionPlace === 'center') {
+					Main.panel._centerBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				} else {
+					Main.panel._rightBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				}
+			}
+
 }
 
 function disable() {
