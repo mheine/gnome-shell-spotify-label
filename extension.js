@@ -7,27 +7,24 @@ const Clutter = imports.gi.Clutter;
 const PanelMenu = imports.ui.panelMenu;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-const LEFT_PADDING = 30;
-const MAX_STRING_LENGTH = 40;
-const REFRESH_RATE = 2;
-const FRIENDLY_GREETING = false;
-const ARTIST_FIRST = true;
-const EXTENSION_PLACE = "left";
-const EXTENSION_INDEX = 2;
-
+let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST,  EXTENSION_PLACE, EXTENSION_INDEX, gschema;
+var settings;
 let _httpSession;
+
 const SpotifyLabel = new Lang.Class({
 	Name: 'SpotifyLabel',
 	Extends: PanelMenu.Button,
 
-	_init: function () {
+	_init: function (settings) {
 		this.parent(0.0, "Spotify Label", false);
 
 		this.buttonText = new St.Label({
 			text: _("Loading..."),
-			style: "padding-left: " + LEFT_PADDING + "px;",
+			style: "padding-left: " + settings.get_int('left-padding') + "px;",
 			y_align: Clutter.ActorAlign.CENTER,
 			x_align: Clutter.ActorAlign.FILL
 		});
@@ -48,7 +45,7 @@ const SpotifyLabel = new Lang.Class({
 	_refresh: function () {
 		this._loadData(this._refreshUI);
 		this._removeTimeout();
-		this._timeout = Mainloop.timeout_add_seconds(REFRESH_RATE, Lang.bind(this, this._refresh));
+		this._timeout = Mainloop.timeout_add_seconds(settings.get_int('refresh-rate'), Lang.bind(this, this._refresh));
 		return true;
 	},
 
@@ -101,8 +98,18 @@ function init() {
 }
 
 function enable() {
-	spMenu = new SpotifyLabel;
-   	Main.panel.addToStatusArea('sp-indicator', spMenu, EXTENSION_INDEX, EXTENSION_PLACE)
+	gschema = Gio.SettingsSchemaSource.new_from_directory(
+        Me.dir.get_child('schemas').get_path(),
+        Gio.SettingsSchemaSource.get_default(),
+        false
+    );
+
+    settings = new Gio.Settings({
+        settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
+    });
+        
+	spMenu = new SpotifyLabel(settings);
+   	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
 }
 
 function disable() {
@@ -127,16 +134,16 @@ function parseSpotifyData(data) {
 		title = title.replace("- ", "(") + ")";
 
 	//If the name of either string is too long, cut off and add '...'
-	if (artist.length > MAX_STRING_LENGTH)
-		artist = artist.substring(0, MAX_STRING_LENGTH) + "...";
+	if (artist.length > this.settings.get_int('max-string-length'))
+		artist = artist.substring(0, this.settings.get_int('max-string-length')) + "...";
 
-	if (title.length > MAX_STRING_LENGTH)
-		title = title.substring(0, MAX_STRING_LENGTH) + "...";
+	if (title.length > this.settings.get_int('max-string-length'))
+		title = title.substring(0, this.settings.get_int('max-string-length')) + "...";
 
 	if (title.includes("xesam") || artist.includes("xesam"))
 		return "Loading..."
 
-	if (ARTIST_FIRST) {
+	if (this.settings.get_boolean('artist-first')) {
     	return (artist + " - " + title);
   	}
   	return (title + " - " + artist);
@@ -148,7 +155,7 @@ let currentGenre = genres[Math.floor(Math.random() * genres.length)];
 let genreChanged = false; 
 
 function createGreeting() {
-	if (!FRIENDLY_GREETING)
+	if (!this.settings.get_boolean('friendly-greeting'))
 		return ""
 
 	var current_hour = new Date().getHours();

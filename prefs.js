@@ -48,7 +48,7 @@ function buildPrefsWidget() {
 
     let leftPaddingEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
-            lower: 1,
+            lower: 0,
             upper: 100,
             step_increment: 1
         }),
@@ -58,7 +58,7 @@ function buildPrefsWidget() {
     
     /* max-string-length */
     let maxStringLengthLabel = new Gtk.Label({
-        label: 'Max string length:',
+        label: 'Max string length (Each artist and titel):',
         halign: Gtk.Align.START,
         visible: true
     });
@@ -76,7 +76,7 @@ function buildPrefsWidget() {
     
     /* refresh-rate */
     let refreshRateLabel = new Gtk.Label({
-        label: 'Refresh rate:',
+        label: 'Refresh rate (seconds):',
         halign: Gtk.Align.START,
         visible: true
     });
