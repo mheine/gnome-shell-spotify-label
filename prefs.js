@@ -85,7 +85,7 @@ function buildPrefsWidget() {
     let refreshRateEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
             lower: 1,
-            upper: 10,
+            upper: 60,
             step_increment: 1
         }),
         visible: true
@@ -153,7 +153,7 @@ function buildPrefsWidget() {
 
     let extensionIndexEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
-            lower: 1,
+            lower: 0,
             upper: 20,
             step_increment: 1
         }),
