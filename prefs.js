@@ -2,6 +2,7 @@
 
 const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
+const Lang = imports.lang;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
@@ -131,7 +132,6 @@ function buildPrefsWidget() {
 
 	let options = ['left', 'center', 'right'];
     let extensionPlaceComboBox = new Gtk.ComboBoxText({
-    	valign: Gtk.Align.END,
     	halign: Gtk.Align.END,
     	visible: true
     });
@@ -140,6 +140,8 @@ function buildPrefsWidget() {
     }
     extensionPlaceComboBox.set_active(options.indexOf(settings.get_string('extension-place')));
     prefsWidget.attach(extensionPlaceComboBox, 1, 6, 1, 1);
+
+    log(options[extensionPlaceComboBox.get_active()]);
     
     /* extension-index */
     let extensionIndexLabel = new Gtk.Label({
@@ -165,7 +167,9 @@ function buildPrefsWidget() {
     settings.bind('refresh-rate', refreshRateEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('friendly-greeting', friendlyGreetingSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('artist-first', artistFirstSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
-    settings.bind('extension-place', extensionPlaceComboBox, 'text', Gio.SettingsBindFlags.DEFAULT);
+    extensionPlaceComboBox.connect('changed', Lang.bind(this, function(widget) {
+        settings.set_string('extension-place', options[widget.get_active()]);
+      }));
     settings.bind('extension-index', extensionIndexEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
 
     return prefsWidget;
