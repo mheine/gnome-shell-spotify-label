@@ -14,6 +14,7 @@ const Me = ExtensionUtils.getCurrentExtension();
 let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST,  EXTENSION_PLACE, EXTENSION_INDEX, gschema;
 var settings;
 let _httpSession;
+let spMenu;
 
 const SpotifyLabel = new Lang.Class({
 	Name: 'SpotifyLabel',
@@ -22,9 +23,14 @@ const SpotifyLabel = new Lang.Class({
 	_init: function (settings) {
 		this.parent(0.0, "Spotify Label", false);
 
+		this.settings = settings;
+
+		this.lastExtensionPlace = this.settings.get_string('extension-place');
+		this.lastExtensionIndex = this.settings.get_int('extension-index');
+
 		this.buttonText = new St.Label({
 			text: _("Loading..."),
-			style: "padding-left: " + settings.get_int('left-padding') + "px;",
+			style: "padding-left: " + this.settings.get_int('left-padding') + "px;",
 			y_align: Clutter.ActorAlign.CENTER,
 			x_align: Clutter.ActorAlign.FILL
 		});
@@ -43,9 +49,29 @@ const SpotifyLabel = new Lang.Class({
 
 	//Defind the refreshing function and set the timeout in seconds
 	_refresh: function () {
+		if (this.lastExtensionPlace !== this.settings.get_string('extension-place')
+			|| this.lastExtensionIndex !== this.settings.get_int('extension-index')) {
+				if (this.lastExtensionPlace === 'left') {
+					Main.panel._leftBox.remove_actor(spMenu.container);
+				} else if (this.lastExtensionPlace === 'center') {
+					Main.panel._centerBox.remove_actor(spMenu.container);
+				} else {
+					Main.panel._rightBox.remove_actor(spMenu.container);
+				}
+				this.lastExtensionPlace = this.settings.get_string('extension-place');
+				this.lastExtensionIndex = this.settings.get_int('extension-index');
+				if (this.lastExtensionPlace === 'left') {
+					Main.panel._leftBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				} else if (this.lastExtensionPlace === 'center') {
+					Main.panel._centerBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				} else {
+					Main.panel._rightBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				}
+			}
+
 		this._loadData(this._refreshUI);
 		this._removeTimeout();
-		this._timeout = Mainloop.timeout_add_seconds(settings.get_int('refresh-rate'), Lang.bind(this, this._refresh));
+		this._timeout = Mainloop.timeout_add_seconds(this.settings.get_int('refresh-rate'), Lang.bind(this, this._refresh));
 		return true;
 	},
 
@@ -92,8 +118,6 @@ const SpotifyLabel = new Lang.Class({
 }
 );
 
-let spMenu;
-
 function init() {
 }
 
@@ -109,7 +133,7 @@ function enable() {
     });
         
 	spMenu = new SpotifyLabel(settings);
-   	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
+	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
 }
 
 function disable() {
