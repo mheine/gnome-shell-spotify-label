@@ -7,39 +7,40 @@ const Clutter = imports.gi.Clutter;
 const PanelMenu = imports.ui.panelMenu;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-const LEFT_PADDING = 30;
-const MAX_STRING_LENGTH = 40;
-const REFRESH_RATE = 2;
-const FRIENDLY_GREETING = true;
-
-
+let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST,  EXTENSION_PLACE, EXTENSION_INDEX, gschema, lastExtensionPlace, lastExtensionIndex;
+var settings;
 let _httpSession;
+let spMenu;
+
 const SpotifyLabel = new Lang.Class({
 	Name: 'SpotifyLabel',
 	Extends: PanelMenu.Button,
 
-	_init: function () {
+	_init: function (settings) {
 		this.parent(0.0, "Spotify Label", false);
+
+		this.settings = settings;
 
 		this.buttonText = new St.Label({
 			text: _("Loading..."),
-			style: "padding-left: " + LEFT_PADDING + "px;",
+			style: "padding-left: " + this.settings.get_int('left-padding') + "px;",
 			y_align: Clutter.ActorAlign.CENTER,
 			x_align: Clutter.ActorAlign.FILL
 		});
 
-		
-		//Ensure that current actor (i.e our label) is not part of any existing layout
-		let dummyBox = new St.BoxLayout();
-		this.actor.reparent(dummyBox);
-		dummyBox.remove_actor(this.actor);
-		dummyBox.destroy();
+		// Listen for update of padding in settings
+		this.onLeftPaddingChanged = this.settings.connect(
+			'changed::left-padding',
+			this._leftPaddingChanged.bind(this)
+		);
 
 		// Create a new layout, add the text and add the actor to the layout
 		let topBox = new St.BoxLayout();
-		topBox.add_actor(this.buttonText);
+		topBox.add(this.buttonText);
 		this.actor.add_actor(topBox);
 
 		//Place the actor/label at the "end" (rightmost) position within the left box
@@ -49,11 +50,16 @@ const SpotifyLabel = new Lang.Class({
 		this._refresh();
 	},
 
+	// Update left padding of this.buttonText according to new value set in settings
+	_leftPaddingChanged: function() {
+		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px;");
+	},
+
 	//Defind the refreshing function and set the timeout in seconds
 	_refresh: function () {
 		this._loadData(this._refreshUI);
 		this._removeTimeout();
-		this._timeout = Mainloop.timeout_add_seconds(REFRESH_RATE, Lang.bind(this, this._refresh));
+		this._timeout = Mainloop.timeout_add_seconds(this.settings.get_int('refresh-rate'), Lang.bind(this, this._refresh));
 		return true;
 	},
 
@@ -100,19 +106,68 @@ const SpotifyLabel = new Lang.Class({
 }
 );
 
-let spMenu;
-
 function init() {
 }
 
 function enable() {
-	spMenu = new SpotifyLabel;
-	Main.panel.addToStatusArea('sp-indicator', spMenu)
+
+	// Load schema
+	gschema = Gio.SettingsSchemaSource.new_from_directory(
+        Me.dir.get_child('schemas').get_path(),
+        Gio.SettingsSchemaSource.get_default(),
+        false
+    );
+
+	// Load settings
+    settings = new Gio.Settings({
+        settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
+	});
+
+	// Mandatory for removing the spMenu from the correct location
+	this.lastExtensionPlace = settings.get_string('extension-place');
+	this.lastExtensionIndex = settings.get_int('extension-index');
+	
+	this.onExtensionPlaceChanged = this.settings.connect(
+		'changed::extension-place',
+		this.onExtensionLocationChanged.bind(this)
+	);
+
+	this.onExtensionIndexChanged = this.settings.connect(
+		'changed::extension-index',
+		this.onExtensionLocationChanged.bind(this)
+	);
+        
+	spMenu = new SpotifyLabel(settings);
+	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
 }
 
 function disable() {
 	spMenu.stop();
 	spMenu.destroy();
+}
+
+// Removes spMenu from correct location and then adds it to new one
+function onExtensionLocationChanged (settings, key) {
+	if (this.lastExtensionPlace !== this.settings.get_string('extension-place')
+			|| this.lastExtensionIndex !== this.settings.get_int('extension-index')) {
+				if (this.lastExtensionPlace === 'left') {
+					Main.panel._leftBox.remove_actor(spMenu.container);
+				} else if (this.lastExtensionPlace === 'center') {
+					Main.panel._centerBox.remove_actor(spMenu.container);
+				} else {
+					Main.panel._rightBox.remove_actor(spMenu.container);
+				}
+				this.lastExtensionPlace = this.settings.get_string('extension-place');
+				this.lastExtensionIndex = this.settings.get_int('extension-index');
+				if (this.lastExtensionPlace === 'left') {
+					Main.panel._leftBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				} else if (this.lastExtensionPlace === 'center') {
+					Main.panel._centerBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				} else {
+					Main.panel._rightBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
+				}
+			}
+
 }
 
 //Spotify uses MIPRIS v2, and as such the metadata fields are prefixed by 'xesam'
@@ -132,16 +187,19 @@ function parseSpotifyData(data) {
 		title = title.replace("- ", "(") + ")";
 
 	//If the name of either string is too long, cut off and add '...'
-	if (artist.length > MAX_STRING_LENGTH)
-		artist = artist.substring(0, MAX_STRING_LENGTH) + "...";
+	if (artist.length > this.settings.get_int('max-string-length'))
+		artist = artist.substring(0, this.settings.get_int('max-string-length')) + "...";
 
-	if (title.length > MAX_STRING_LENGTH)
-		title = title.substring(0, MAX_STRING_LENGTH) + "...";
+	if (title.length > this.settings.get_int('max-string-length'))
+		title = title.substring(0, this.settings.get_int('max-string-length')) + "...";
 
 	if (title.includes("xesam") || artist.includes("xesam"))
 		return "Loading..."
 
-	return (title + " - " + artist);
+	if (this.settings.get_boolean('artist-first')) {
+    	return (artist + " - " + title);
+  	}
+  	return (title + " - " + artist);
 }
 
 
@@ -150,7 +208,7 @@ let currentGenre = genres[Math.floor(Math.random() * genres.length)];
 let genreChanged = false; 
 
 function createGreeting() {
-	if (!FRIENDLY_GREETING)
+	if (!this.settings.get_boolean('friendly-greeting'))
 		return ""
 
 	var current_hour = new Date().getHours();
