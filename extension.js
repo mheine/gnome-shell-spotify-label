@@ -12,7 +12,7 @@ const Me = ExtensionUtils.getCurrentExtension();
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
 let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST,  EXTENSION_PLACE, EXTENSION_INDEX, gschema, lastExtensionPlace, lastExtensionIndex;
-var settings;
+var settings, onLeftPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged;
 let _httpSession;
 let spMenu;
 
@@ -33,7 +33,7 @@ const SpotifyLabel = new Lang.Class({
 		});
 
 		// Listen for update of padding in settings
-		this.onLeftPaddingChanged = this.settings.connect(
+		onLeftPaddingChanged = this.settings.connect(
 			'changed::left-padding',
 			this._leftPaddingChanged.bind(this)
 		);
@@ -127,12 +127,12 @@ function enable() {
 	this.lastExtensionPlace = settings.get_string('extension-place');
 	this.lastExtensionIndex = settings.get_int('extension-index');
 	
-	this.onExtensionPlaceChanged = this.settings.connect(
+	onExtensionPlaceChanged = this.settings.connect(
 		'changed::extension-place',
 		this.onExtensionLocationChanged.bind(this)
 	);
 
-	this.onExtensionIndexChanged = this.settings.connect(
+	onExtensionIndexChanged = this.settings.connect(
 		'changed::extension-index',
 		this.onExtensionLocationChanged.bind(this)
 	);
@@ -142,6 +142,10 @@ function enable() {
 }
 
 function disable() {
+	this.settings.disconnect(onLeftPaddingChanged);
+	this.settings.disconnect(onExtensionPlaceChanged);
+	this.settings.disconnect(onExtensionIndexChanged);
+
 	spMenu.stop();
 	spMenu.destroy();
 }
