@@ -143,7 +143,7 @@ function buildPrefsWidget() {
     
     /* extension-index */
     let extensionIndexLabel = new Gtk.Label({
-        label: 'Extension Index:',
+        label: 'Extension index:',
         halign: Gtk.Align.START,
         visible: true
     });
