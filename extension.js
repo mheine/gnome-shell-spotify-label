@@ -75,7 +75,7 @@ const SpotifyLabel = new Lang.Class({
 			global.log("spotifylabel: res: " + res + " -- status: " + status + " -- err:" + err);
 			return;
 		}
-		
+
 		var labelstring = parseSpotifyData(out.toString());
 		this._refreshUI(labelstring);
 	},
@@ -126,7 +126,7 @@ function enable() {
 	// Mandatory for removing the spMenu from the correct location
 	this.lastExtensionPlace = settings.get_string('extension-place');
 	this.lastExtensionIndex = settings.get_int('extension-index');
-	
+
 	onExtensionPlaceChanged = this.settings.connect(
 		'changed::extension-place',
 		this.onExtensionLocationChanged.bind(this)
@@ -136,8 +136,22 @@ function enable() {
 		'changed::extension-index',
 		this.onExtensionLocationChanged.bind(this)
 	);
-        
+
 	spMenu = new SpotifyLabel(settings);
+
+	// pressing SpotifyLabel switches to Spotify window
+	spMenu.actor.connect('button-press-event',
+	function () {
+		let windowActors = global.get_window_actors();
+		for (let windowActor of windowActors) {
+			if (typeof windowActor.get_meta_window === "function" && windowActor.get_meta_window().get_wm_class() === 'Spotify') {
+				Main.activateWindow(windowActor.get_meta_window());
+				return;
+			}
+		}
+	}
+	);
+
 	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
 }
 
@@ -209,7 +223,7 @@ function parseSpotifyData(data) {
 
 let genres = ["DnB", "Synthwave", "Dubstep", "Pop", "House", "Hardstyle", "Rock", "8-bit", "Classical", "Electro"]
 let currentGenre = genres[Math.floor(Math.random() * genres.length)];
-let genreChanged = false; 
+let genreChanged = false;
 
 function createGreeting() {
 	if (!this.settings.get_boolean('friendly-greeting'))
