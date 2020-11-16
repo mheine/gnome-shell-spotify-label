@@ -11,10 +11,11 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST,  EXTENSION_PLACE, EXTENSION_INDEX, gschema, lastExtensionPlace, lastExtensionIndex;
+let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST, EXTENSION_PLACE, EXTENSION_INDEX, gschema, lastExtensionPlace, lastExtensionIndex;
 var settings, onLeftPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged;
 let _httpSession;
 let spMenu;
+let nonSpotifyWindow, spotifyWindow;
 
 const SpotifyLabel = new Lang.Class({
 	Name: 'SpotifyLabel',
@@ -75,7 +76,7 @@ const SpotifyLabel = new Lang.Class({
 			global.log("spotifylabel: res: " + res + " -- status: " + status + " -- err:" + err);
 			return;
 		}
-		
+
 		var labelstring = parseSpotifyData(out.toString());
 		this._refreshUI(labelstring);
 	},
@@ -126,7 +127,7 @@ function enable() {
 	// Mandatory for removing the spMenu from the correct location
 	this.lastExtensionPlace = settings.get_string('extension-place');
 	this.lastExtensionIndex = settings.get_int('extension-index');
-	
+
 	onExtensionPlaceChanged = this.settings.connect(
 		'changed::extension-place',
 		this.onExtensionLocationChanged.bind(this)
@@ -136,8 +137,38 @@ function enable() {
 		'changed::extension-index',
 		this.onExtensionLocationChanged.bind(this)
 	);
-        
+
 	spMenu = new SpotifyLabel(settings);
+
+	// press label to toggle Spotify window / current window
+	spMenu.actor.connect('button-press-event',
+	function () {
+		if (spotifyWindow && spotifyWindow.has_focus()) // Spotify is focused
+		{
+			if(nonSpotifyWindow)
+				Main.activateWindow(nonSpotifyWindow);
+			// else do nothing
+		}
+		else // Spotify not focused, first press, multiple Spotify windows - all cases
+		{
+			nonSpotifyWindow = null; // nonSpotifyWindow might have changed
+			let windowActors = global.get_window_actors();
+			for (let windowActor of windowActors) {
+				if (typeof windowActor.get_meta_window === "function") {
+					if (windowActor.get_meta_window().get_wm_class() === 'Spotify')
+						spotifyWindow = windowActor.get_meta_window();
+					else if (windowActor.get_meta_window().has_focus())
+						nonSpotifyWindow = windowActor.get_meta_window();
+
+					if (spotifyWindow && nonSpotifyWindow) // both found
+						break;
+				}
+			}
+			Main.activateWindow(spotifyWindow); // switch to Spotify
+		}
+	}
+	);
+
 	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
 }
 
@@ -186,7 +217,7 @@ function parseSpotifyData(data) {
 	var artistBlock = data.substring(data.indexOf("xesam:artist"));
 	var artist = artistBlock.split("\"")[2]
 
-	//If the delimited '-' is  in the title, we assume that it's remix, and encapsulate the end in brackets.
+	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
 	if(title.includes("-"))
 		title = title.replace("- ", "(") + ")";
 
@@ -209,7 +240,7 @@ function parseSpotifyData(data) {
 
 let genres = ["DnB", "Synthwave", "Dubstep", "Pop", "House", "Hardstyle", "Rock", "8-bit", "Classical", "Electro"]
 let currentGenre = genres[Math.floor(Math.random() * genres.length)];
-let genreChanged = false; 
+let genreChanged = false;
 
 function createGreeting() {
 	if (!this.settings.get_boolean('friendly-greeting'))
@@ -237,7 +268,7 @@ function createGreeting() {
 		return "What's todays soundtrack? A bit of " + currentGenre + "?";
 
 	else if (current_hour == 12)
-		return "" + currentGenre + " music and  bit of lunch?";
+		return "" + currentGenre + " music and bit of lunch?";
 
 	else if (current_hour < 15)
 		return "Is that " + currentGenre + " music on the radio? Let's go!";
