@@ -11,8 +11,8 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST,  EXTENSION_PLACE, EXTENSION_INDEX, gschema, lastExtensionPlace, lastExtensionIndex;
-var settings, onLeftPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged;
+let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST, EXTENSION_PLACE, EXTENSION_INDEX, TOGGLE_WINDOW, gschema, lastExtensionPlace, lastExtensionIndex;
+var settings, onLeftPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged, onToggleModeChanged;
 let _httpSession;
 let spMenu;
 
@@ -38,6 +38,13 @@ const SpotifyLabel = new Lang.Class({
 			this._leftPaddingChanged.bind(this)
 		);
 
+		// Listen for changes in the toggle feature
+		onToggleModeChanged = this.settings.connect(
+			'changed::toggle-window',
+			this._toggleModeChanged.bind(this)
+		);
+		this._toggleModeChanged(); // checks and connects the toggle button
+
 		// Create a new layout, add the text and add the actor to the layout
 		let topBox = new St.BoxLayout();
 		topBox.add(this.buttonText);
@@ -53,6 +60,16 @@ const SpotifyLabel = new Lang.Class({
 	// Update left padding of this.buttonText according to new value set in settings
 	_leftPaddingChanged: function() {
 		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px;");
+	},
+
+	// Update labelEventListener if toggle mode changes
+	_toggleModeChanged: function () {
+		spotifyWindow = nonSpotifyWindow = null;
+		if (settings.get_boolean('toggle-window')) {
+			this.toggleModeID = this.actor.connect('button-press-event', toggleWindow);
+		} else {
+			this.actor.disconnect(this.toggleModeID);
+		}
 	},
 
 	//Defind the refreshing function and set the timeout in seconds
@@ -75,7 +92,7 @@ const SpotifyLabel = new Lang.Class({
 			global.log("spotifylabel: res: " + res + " -- status: " + status + " -- err:" + err);
 			return;
 		}
-		
+
 		var labelstring = parseSpotifyData(out.toString());
 		this._refreshUI(labelstring);
 	},
@@ -126,7 +143,7 @@ function enable() {
 	// Mandatory for removing the spMenu from the correct location
 	this.lastExtensionPlace = settings.get_string('extension-place');
 	this.lastExtensionIndex = settings.get_int('extension-index');
-	
+
 	onExtensionPlaceChanged = this.settings.connect(
 		'changed::extension-place',
 		this.onExtensionLocationChanged.bind(this)
@@ -136,7 +153,9 @@ function enable() {
 		'changed::extension-index',
 		this.onExtensionLocationChanged.bind(this)
 	);
-        
+
+	let spotifyWindow, nonSpotifyWindow; // used by the switcher - greyed out in most editors
+
 	spMenu = new SpotifyLabel(settings);
 	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
 }
@@ -145,6 +164,7 @@ function disable() {
 	this.settings.disconnect(onLeftPaddingChanged);
 	this.settings.disconnect(onExtensionPlaceChanged);
 	this.settings.disconnect(onExtensionIndexChanged);
+	this.settings.disconnect(onToggleModeChanged);
 
 	spMenu.stop();
 	spMenu.destroy();
@@ -171,7 +191,6 @@ function onExtensionLocationChanged (settings, key) {
 					Main.panel._rightBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
 				}
 			}
-
 }
 
 //Spotify uses MIPRIS v2, and as such the metadata fields are prefixed by 'xesam'
@@ -186,7 +205,7 @@ function parseSpotifyData(data) {
 	var artistBlock = data.substring(data.indexOf("xesam:artist"));
 	var artist = artistBlock.split("\"")[2]
 
-	//If the delimited '-' is  in the title, we assume that it's remix, and encapsulate the end in brackets.
+	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
 	if(title.includes("-"))
 		title = title.replace("- ", "(") + ")";
 
@@ -206,10 +225,33 @@ function parseSpotifyData(data) {
   	return (title + " - " + artist);
 }
 
+function toggleWindow() {
+	if (spotifyWindow && spotifyWindow.has_focus()){ // Spotify is focused
+		if (nonSpotifyWindow)
+			Main.activateWindow(nonSpotifyWindow);
+		// else do nothing
+
+	} else { // Spotify not focused, first press, multiple Spotify windows - all cases
+		nonSpotifyWindow = spotifyWindow = null; // nonSpotifyWindow changes OR another spotifyWindow is active
+		let windowActors = global.get_window_actors();
+		for (let windowActor of windowActors) {
+			if (typeof windowActor.get_meta_window === "function") {
+				if (windowActor.get_meta_window().get_wm_class() === 'Spotify')
+					spotifyWindow = windowActor.get_meta_window();
+				else if (windowActor.get_meta_window().has_focus())
+					nonSpotifyWindow = windowActor.get_meta_window();
+
+				if (spotifyWindow && nonSpotifyWindow) // both found
+					break;
+			}
+		}
+		Main.activateWindow(spotifyWindow); // switch to Spotify
+	}
+}
 
 let genres = ["DnB", "Synthwave", "Dubstep", "Pop", "House", "Hardstyle", "Rock", "8-bit", "Classical", "Electro"]
 let currentGenre = genres[Math.floor(Math.random() * genres.length)];
-let genreChanged = false; 
+let genreChanged = false;
 
 function createGreeting() {
 	if (!this.settings.get_boolean('friendly-greeting'))
@@ -237,7 +279,7 @@ function createGreeting() {
 		return "What's todays soundtrack? A bit of " + currentGenre + "?";
 
 	else if (current_hour == 12)
-		return "" + currentGenre + " music and  bit of lunch?";
+		return "" + currentGenre + " music and bit of lunch?";
 
 	else if (current_hour < 15)
 		return "Is that " + currentGenre + " music on the radio? Let's go!";

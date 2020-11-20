@@ -55,7 +55,7 @@ function buildPrefsWidget() {
         visible: true
     });
     prefsWidget.attach(leftPaddingEntry, 1, 1, 1, 1);
-    
+
     /* max-string-length */
     let maxStringLengthLabel = new Gtk.Label({
         label: 'Max string length (Each artist and titel):',
@@ -73,7 +73,7 @@ function buildPrefsWidget() {
         visible: true
     });
     prefsWidget.attach(maxStringLengthEntry, 1, 2, 1, 1);
-    
+
     /* refresh-rate */
     let refreshRateLabel = new Gtk.Label({
         label: 'Refresh rate (seconds):',
@@ -91,7 +91,7 @@ function buildPrefsWidget() {
         visible: true
     });
     prefsWidget.attach(refreshRateEntry, 1, 3, 1, 1);
-    
+
     /* friendly-greeting */
     let friendlyGreetingLabel = new Gtk.Label({
         label: 'Friendly greeting:',
@@ -106,7 +106,7 @@ function buildPrefsWidget() {
     	visible: true
     });
     prefsWidget.attach(friendlyGreetingSwitch, 1, 4, 1, 1);
-    
+
     /* artist-first */
     let artistFirstLabel = new Gtk.Label({
         label: 'Artist first:',
@@ -121,7 +121,7 @@ function buildPrefsWidget() {
     	visible: true
     });
     prefsWidget.attach(artistFirstSwitch, 1, 5, 1, 1);
-    
+
     /* extension-place */
     let extensionPlaceLabel = new Gtk.Label({
         label: 'Extension place:',
@@ -140,7 +140,7 @@ function buildPrefsWidget() {
     }
     extensionPlaceComboBox.set_active(options.indexOf(settings.get_string('extension-place')));
     prefsWidget.attach(extensionPlaceComboBox, 1, 6, 1, 1);
-    
+
     /* extension-index */
     let extensionIndexLabel = new Gtk.Label({
         label: 'Extension index:',
@@ -159,12 +159,28 @@ function buildPrefsWidget() {
     });
     prefsWidget.attach(extensionIndexEntry, 1, 7, 1, 1);
 
+    /* toggle-window */
+    let toggleWindowLabel = new Gtk.Label({
+        label: 'Click to toggle Spotify window/work window:',
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(toggleWindowLabel, 0, 8, 1, 1);
+
+    let toggleWindowSwitch = new Gtk.Switch({
+    	valign: Gtk.Align.END,
+    	halign: Gtk.Align.END,
+    	visible: true
+    });
+    prefsWidget.attach(toggleWindowSwitch, 1, 8, 1, 1);
+
     //settings.bind('command', commandEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('left-padding', leftPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('max-string-length', maxStringLengthEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('refresh-rate', refreshRateEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('friendly-greeting', friendlyGreetingSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('artist-first', artistFirstSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('toggle-window', toggleWindowSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     extensionPlaceComboBox.connect('changed', Lang.bind(this, function(widget) {
         settings.set_string('extension-place', options[widget.get_active()]);
       }));

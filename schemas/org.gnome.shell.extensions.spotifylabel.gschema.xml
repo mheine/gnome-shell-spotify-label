@@ -22,5 +22,8 @@
     <key name="extension-index" type="i">
       <default>2</default>
     </key>
+    <key name="toggle-window" type="b">
+      <default>false</default>
+    </key>
   </schema>
 </schemalist>
