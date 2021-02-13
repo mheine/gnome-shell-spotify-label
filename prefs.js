@@ -58,7 +58,7 @@ function buildPrefsWidget() {
 
     /* max-string-length */
     let maxStringLengthLabel = new Gtk.Label({
-        label: 'Max string length (Each artist and titel):',
+        label: 'Max string length (Each artist and title):',
         halign: Gtk.Align.START,
         visible: true
     });
