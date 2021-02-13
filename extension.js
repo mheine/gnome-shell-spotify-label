@@ -182,25 +182,37 @@ function disable() {
 
 // Removes spMenu from correct location and then adds it to new one
 function onExtensionLocationChanged (settings, key) {
-	if (this.lastExtensionPlace !== this.settings.get_string('extension-place')
-			|| this.lastExtensionIndex !== this.settings.get_int('extension-index')) {
-				if (this.lastExtensionPlace === 'left') {
-					Main.panel._leftBox.remove_actor(spMenu.container);
-				} else if (this.lastExtensionPlace === 'center') {
-					Main.panel._centerBox.remove_actor(spMenu.container);
-				} else {
-					Main.panel._rightBox.remove_actor(spMenu.container);
-				}
-				this.lastExtensionPlace = this.settings.get_string('extension-place');
-				this.lastExtensionIndex = this.settings.get_int('extension-index');
-				if (this.lastExtensionPlace === 'left') {
-					Main.panel._leftBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				} else if (this.lastExtensionPlace === 'center') {
-					Main.panel._centerBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				} else {
-					Main.panel._rightBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				}
-			}
+	const newExtensionPlace = this.settings.get_string('extension-place');
+	const newExtensionIndex = this.settings.get_int('extension-index');
+
+	if (this.lastExtensionPlace !== newExtensionPlace
+			|| this.lastExtensionIndex !== newExtensionIndex) {
+
+		switch (this.lastExtensionPlace) {
+			case 'left':
+				Main.panel._leftBox.remove_actor(spMenu.container);
+				break;
+			case 'center':
+				Main.panel._centerBox.remove_actor(spMenu.container);
+				break;
+			default:
+				Main.panel._rightBox.remove_actor(spMenu.container);
+		}
+
+		this.lastExtensionPlace = newExtensionPlace;
+		this.lastExtensionIndex = newExtensionIndex;
+
+		switch (newExtensionPlace) {
+			case 'left':
+				Main.panel._leftBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+				break;
+			case 'center':
+				Main.panel._centerBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+				break;
+			default:
+				Main.panel._rightBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+		}
+	}
 }
 
 //Spotify uses MIPRIS v2, and as such the metadata fields are prefixed by 'xesam'
