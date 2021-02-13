@@ -11,8 +11,8 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST, EXTENSION_PLACE, EXTENSION_INDEX, TOGGLE_WINDOW, gschema, lastExtensionPlace, lastExtensionIndex;
-var settings, onLeftPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged, onToggleModeChanged;
+let LEFT_PADDING, RIGHT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST, EXTENSION_PLACE, EXTENSION_INDEX, TOGGLE_WINDOW, gschema, lastExtensionPlace, lastExtensionIndex;
+var settings, onLeftPaddingChanged, onRightPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged, onToggleModeChanged;
 let _httpSession;
 let spMenu;
 
@@ -37,6 +37,10 @@ const SpotifyLabel = new Lang.Class({
 			'changed::left-padding',
 			this._leftPaddingChanged.bind(this)
 		);
+		onRightPaddingChanged = this.settings.connect(
+			'changed::right-padding',
+			this._rightPaddingChanged.bind(this)
+		);
 
 		// Listen for changes in the toggle feature
 		onToggleModeChanged = this.settings.connect(
@@ -57,9 +61,14 @@ const SpotifyLabel = new Lang.Class({
 		this._refresh();
 	},
 
-	// Update left padding of this.buttonText according to new value set in settings
+	// Update padding of this.buttonText according to new value set in settings
 	_leftPaddingChanged: function() {
-		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px;");
+		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
+				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ",);
+	},
+	_rightPaddingChanged: function() {
+		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
+				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ",);
 	},
 
 	// Update labelEventListener if toggle mode changes
@@ -162,6 +171,7 @@ function enable() {
 
 function disable() {
 	this.settings.disconnect(onLeftPaddingChanged);
+	this.settings.disconnect(onRightPaddingChanged);
 	this.settings.disconnect(onExtensionPlaceChanged);
 	this.settings.disconnect(onExtensionIndexChanged);
 	this.settings.disconnect(onToggleModeChanged);

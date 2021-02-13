@@ -30,13 +30,15 @@ function buildPrefsWidget() {
         column_homogeneous: true,
     });
 
+    let index = 0;
+
     let title = new Gtk.Label({
         label: '<b>' + Me.metadata.name + ' Extension Preferences</b>',
         halign: Gtk.Align.START,
         use_markup: true,
         visible: true
     });
-    prefsWidget.attach(title, 0, 0, 1, 1);
+    prefsWidget.attach(title, 0, index, 1, 1);
 
 	/* left-padding */
     let leftPaddingLabel = new Gtk.Label({
@@ -44,7 +46,7 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(leftPaddingLabel, 0, 1, 1, 1);
+    prefsWidget.attach(leftPaddingLabel, 0, ++index, 1, 1);
 
     let leftPaddingEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -54,7 +56,25 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
-    prefsWidget.attach(leftPaddingEntry, 1, 1, 1, 1);
+    prefsWidget.attach(leftPaddingEntry, 1, index, 1, 1);
+
+    /* right-padding */
+    let rightPaddingLabel = new Gtk.Label({
+        label: 'Right padding:',
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(rightPaddingLabel, 0, ++index, 1, 1);
+
+    let rightPaddingEntry = new Gtk.SpinButton({
+        adjustment: new Gtk.Adjustment({
+            lower: 0,
+            upper: 100,
+            step_increment: 1
+        }),
+        visible: true
+    });
+    prefsWidget.attach(rightPaddingEntry, 1, index, 1, 1);
 
     /* max-string-length */
     let maxStringLengthLabel = new Gtk.Label({
@@ -62,7 +82,7 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(maxStringLengthLabel, 0, 2, 1, 1);
+    prefsWidget.attach(maxStringLengthLabel, 0, ++index, 1, 1);
 
     let maxStringLengthEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -72,7 +92,7 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
-    prefsWidget.attach(maxStringLengthEntry, 1, 2, 1, 1);
+    prefsWidget.attach(maxStringLengthEntry, 1, index, 1, 1);
 
     /* refresh-rate */
     let refreshRateLabel = new Gtk.Label({
@@ -80,7 +100,7 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(refreshRateLabel, 0, 3, 1, 1);
+    prefsWidget.attach(refreshRateLabel, 0, ++index, 1, 1);
 
     let refreshRateEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -90,7 +110,7 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
-    prefsWidget.attach(refreshRateEntry, 1, 3, 1, 1);
+    prefsWidget.attach(refreshRateEntry, 1, index, 1, 1);
 
     /* friendly-greeting */
     let friendlyGreetingLabel = new Gtk.Label({
@@ -98,14 +118,14 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(friendlyGreetingLabel, 0, 4, 1, 1);
+    prefsWidget.attach(friendlyGreetingLabel, 0, ++index, 1, 1);
 
     let friendlyGreetingSwitch = new Gtk.Switch({
     	valign: Gtk.Align.END,
     	halign: Gtk.Align.END,
     	visible: true
     });
-    prefsWidget.attach(friendlyGreetingSwitch, 1, 4, 1, 1);
+    prefsWidget.attach(friendlyGreetingSwitch, 1, index, 1, 1);
 
     /* artist-first */
     let artistFirstLabel = new Gtk.Label({
@@ -113,14 +133,14 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(artistFirstLabel, 0, 5, 1, 1);
+    prefsWidget.attach(artistFirstLabel, 0, ++index, 1, 1);
 
     let artistFirstSwitch = new Gtk.Switch({
     	valign: Gtk.Align.END,
     	halign: Gtk.Align.END,
     	visible: true
     });
-    prefsWidget.attach(artistFirstSwitch, 1, 5, 1, 1);
+    prefsWidget.attach(artistFirstSwitch, 1, index, 1, 1);
 
     /* extension-place */
     let extensionPlaceLabel = new Gtk.Label({
@@ -128,7 +148,7 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(extensionPlaceLabel, 0, 6, 1, 1);
+    prefsWidget.attach(extensionPlaceLabel, 0, ++index, 1, 1);
 
 	let options = ['left', 'center', 'right'];
     let extensionPlaceComboBox = new Gtk.ComboBoxText({
@@ -139,7 +159,7 @@ function buildPrefsWidget() {
       extensionPlaceComboBox.append(options[i],  options[i]);
     }
     extensionPlaceComboBox.set_active(options.indexOf(settings.get_string('extension-place')));
-    prefsWidget.attach(extensionPlaceComboBox, 1, 6, 1, 1);
+    prefsWidget.attach(extensionPlaceComboBox, 1, index, 1, 1);
 
     /* extension-index */
     let extensionIndexLabel = new Gtk.Label({
@@ -147,7 +167,7 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(extensionIndexLabel, 0, 7, 1, 1);
+    prefsWidget.attach(extensionIndexLabel, 0, ++index, 1, 1);
 
     let extensionIndexEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -157,7 +177,7 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
-    prefsWidget.attach(extensionIndexEntry, 1, 7, 1, 1);
+    prefsWidget.attach(extensionIndexEntry, 1, index, 1, 1);
 
     /* toggle-window */
     let toggleWindowLabel = new Gtk.Label({
@@ -165,17 +185,18 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(toggleWindowLabel, 0, 8, 1, 1);
+    prefsWidget.attach(toggleWindowLabel, 0, ++index, 1, 1);
 
     let toggleWindowSwitch = new Gtk.Switch({
     	valign: Gtk.Align.END,
     	halign: Gtk.Align.END,
     	visible: true
     });
-    prefsWidget.attach(toggleWindowSwitch, 1, 8, 1, 1);
+    prefsWidget.attach(toggleWindowSwitch, 1, index, 1, 1);
 
     //settings.bind('command', commandEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('left-padding', leftPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('right-padding', rightPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('max-string-length', maxStringLengthEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('refresh-rate', refreshRateEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('friendly-greeting', friendlyGreetingSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);

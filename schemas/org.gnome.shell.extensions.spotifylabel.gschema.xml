@@ -4,6 +4,9 @@
     <key name="left-padding" type="i">
       <default>30</default>
     </key>
+    <key name="right-padding" type="i">
+      <default>30</default>
+    </key>
     <key name="max-string-length" type="i">
       <default>40</default>
     </key>
