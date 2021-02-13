@@ -64,11 +64,11 @@ const SpotifyLabel = new Lang.Class({
 	// Update padding of this.buttonText according to new value set in settings
 	_leftPaddingChanged: function() {
 		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
-				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ",);
+				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
 	},
 	_rightPaddingChanged: function() {
 		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
-				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ",);
+				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
 	},
 
 	// Update labelEventListener if toggle mode changes
