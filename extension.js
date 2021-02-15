@@ -11,8 +11,8 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-let LEFT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST, EXTENSION_PLACE, EXTENSION_INDEX, TOGGLE_WINDOW, gschema, lastExtensionPlace, lastExtensionIndex;
-var settings, onLeftPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged, onToggleModeChanged;
+let LEFT_PADDING, RIGHT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST, EXTENSION_PLACE, EXTENSION_INDEX, TOGGLE_WINDOW, gschema, lastExtensionPlace, lastExtensionIndex;
+var settings, onLeftPaddingChanged, onRightPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged, onToggleModeChanged;
 let _httpSession;
 let spMenu;
 
@@ -27,7 +27,8 @@ const SpotifyLabel = new Lang.Class({
 
 		this.buttonText = new St.Label({
 			text: _("Loading..."),
-			style: "padding-left: " + this.settings.get_int('left-padding') + "px;",
+			style: "padding-left: " + this.settings.get_int('left-padding') + "px;"
+				 + "padding-right: " + this.settings.get_int('right-padding') + "px; ",
 			y_align: Clutter.ActorAlign.CENTER,
 			x_align: Clutter.ActorAlign.FILL
 		});
@@ -36,6 +37,10 @@ const SpotifyLabel = new Lang.Class({
 		onLeftPaddingChanged = this.settings.connect(
 			'changed::left-padding',
 			this._leftPaddingChanged.bind(this)
+		);
+		onRightPaddingChanged = this.settings.connect(
+			'changed::right-padding',
+			this._rightPaddingChanged.bind(this)
 		);
 
 		// Listen for changes in the toggle feature
@@ -57,9 +62,14 @@ const SpotifyLabel = new Lang.Class({
 		this._refresh();
 	},
 
-	// Update left padding of this.buttonText according to new value set in settings
+	// Update padding of this.buttonText according to new value set in settings
 	_leftPaddingChanged: function() {
-		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px;");
+		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
+				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
+	},
+	_rightPaddingChanged: function() {
+		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
+				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
 	},
 
 	// Update labelEventListener if toggle mode changes
@@ -162,6 +172,7 @@ function enable() {
 
 function disable() {
 	this.settings.disconnect(onLeftPaddingChanged);
+	this.settings.disconnect(onRightPaddingChanged);
 	this.settings.disconnect(onExtensionPlaceChanged);
 	this.settings.disconnect(onExtensionIndexChanged);
 	this.settings.disconnect(onToggleModeChanged);
@@ -172,25 +183,37 @@ function disable() {
 
 // Removes spMenu from correct location and then adds it to new one
 function onExtensionLocationChanged (settings, key) {
-	if (this.lastExtensionPlace !== this.settings.get_string('extension-place')
-			|| this.lastExtensionIndex !== this.settings.get_int('extension-index')) {
-				if (this.lastExtensionPlace === 'left') {
-					Main.panel._leftBox.remove_actor(spMenu.container);
-				} else if (this.lastExtensionPlace === 'center') {
-					Main.panel._centerBox.remove_actor(spMenu.container);
-				} else {
-					Main.panel._rightBox.remove_actor(spMenu.container);
-				}
-				this.lastExtensionPlace = this.settings.get_string('extension-place');
-				this.lastExtensionIndex = this.settings.get_int('extension-index');
-				if (this.lastExtensionPlace === 'left') {
-					Main.panel._leftBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				} else if (this.lastExtensionPlace === 'center') {
-					Main.panel._centerBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				} else {
-					Main.panel._rightBox.insert_child_at_index(spMenu.container, this.lastExtensionIndex);
-				}
-			}
+	const newExtensionPlace = this.settings.get_string('extension-place');
+	const newExtensionIndex = this.settings.get_int('extension-index');
+
+	if (this.lastExtensionPlace !== newExtensionPlace
+			|| this.lastExtensionIndex !== newExtensionIndex) {
+
+		switch (this.lastExtensionPlace) {
+			case 'left':
+				Main.panel._leftBox.remove_actor(spMenu.container);
+				break;
+			case 'center':
+				Main.panel._centerBox.remove_actor(spMenu.container);
+				break;
+			default:
+				Main.panel._rightBox.remove_actor(spMenu.container);
+		}
+
+		this.lastExtensionPlace = newExtensionPlace;
+		this.lastExtensionIndex = newExtensionIndex;
+
+		switch (newExtensionPlace) {
+			case 'left':
+				Main.panel._leftBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+				break;
+			case 'center':
+				Main.panel._centerBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+				break;
+			default:
+				Main.panel._rightBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+		}
+	}
 }
 
 //Spotify uses MIPRIS v2, and as such the metadata fields are prefixed by 'xesam'
