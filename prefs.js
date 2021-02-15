@@ -46,7 +46,6 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(leftPaddingLabel, 0, ++index, 1, 1);
 
     let leftPaddingEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -56,6 +55,9 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
+
+    index++;
+    prefsWidget.attach(leftPaddingLabel, 0, index, 1, 1);
     prefsWidget.attach(leftPaddingEntry, 1, index, 1, 1);
 
     /* right-padding */
@@ -64,7 +66,6 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(rightPaddingLabel, 0, ++index, 1, 1);
 
     let rightPaddingEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -74,6 +75,9 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
+
+    index++;
+    prefsWidget.attach(rightPaddingLabel, 0, index, 1, 1);
     prefsWidget.attach(rightPaddingEntry, 1, index, 1, 1);
 
     /* max-string-length */
@@ -82,7 +86,6 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(maxStringLengthLabel, 0, ++index, 1, 1);
 
     let maxStringLengthEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -92,7 +95,11 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
+
+    index++;
+    prefsWidget.attach(maxStringLengthLabel, 0, index, 1, 1);
     prefsWidget.attach(maxStringLengthEntry, 1, index, 1, 1);
+
 
     /* refresh-rate */
     let refreshRateLabel = new Gtk.Label({
@@ -100,7 +107,6 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(refreshRateLabel, 0, ++index, 1, 1);
 
     let refreshRateEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -110,6 +116,9 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
+
+    index++;
+    prefsWidget.attach(refreshRateLabel, 0, index, 1, 1);
     prefsWidget.attach(refreshRateEntry, 1, index, 1, 1);
 
     /* friendly-greeting */
@@ -118,13 +127,15 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(friendlyGreetingLabel, 0, ++index, 1, 1);
 
     let friendlyGreetingSwitch = new Gtk.Switch({
     	valign: Gtk.Align.END,
     	halign: Gtk.Align.END,
     	visible: true
     });
+
+    index++;
+    prefsWidget.attach(friendlyGreetingLabel, 0, index, 1, 1);
     prefsWidget.attach(friendlyGreetingSwitch, 1, index, 1, 1);
 
     /* artist-first */
@@ -133,13 +144,15 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(artistFirstLabel, 0, ++index, 1, 1);
 
     let artistFirstSwitch = new Gtk.Switch({
     	valign: Gtk.Align.END,
     	halign: Gtk.Align.END,
     	visible: true
     });
+
+    index++;
+    prefsWidget.attach(artistFirstLabel, 0, index, 1, 1);
     prefsWidget.attach(artistFirstSwitch, 1, index, 1, 1);
 
     /* extension-place */
@@ -148,7 +161,6 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(extensionPlaceLabel, 0, ++index, 1, 1);
 
 	let options = ['left', 'center', 'right'];
     let extensionPlaceComboBox = new Gtk.ComboBoxText({
@@ -159,6 +171,9 @@ function buildPrefsWidget() {
       extensionPlaceComboBox.append(options[i],  options[i]);
     }
     extensionPlaceComboBox.set_active(options.indexOf(settings.get_string('extension-place')));
+
+    index++;
+    prefsWidget.attach(extensionPlaceLabel, 0, index, 1, 1);
     prefsWidget.attach(extensionPlaceComboBox, 1, index, 1, 1);
 
     /* extension-index */
@@ -167,7 +182,6 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(extensionIndexLabel, 0, ++index, 1, 1);
 
     let extensionIndexEntry = new Gtk.SpinButton({
         adjustment: new Gtk.Adjustment({
@@ -177,6 +191,9 @@ function buildPrefsWidget() {
         }),
         visible: true
     });
+
+    index++;
+    prefsWidget.attach(extensionIndexLabel, 0, index, 1, 1);
     prefsWidget.attach(extensionIndexEntry, 1, index, 1, 1);
 
     /* toggle-window */
@@ -185,14 +202,17 @@ function buildPrefsWidget() {
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(toggleWindowLabel, 0, ++index, 1, 1);
 
     let toggleWindowSwitch = new Gtk.Switch({
     	valign: Gtk.Align.END,
     	halign: Gtk.Align.END,
     	visible: true
     });
+
+    index++;
+    prefsWidget.attach(toggleWindowLabel, 0, index, 1, 1);
     prefsWidget.attach(toggleWindowSwitch, 1, index, 1, 1);
+
 
     //settings.bind('command', commandEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('left-padding', leftPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);

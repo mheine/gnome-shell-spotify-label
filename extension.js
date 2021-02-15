@@ -27,7 +27,8 @@ const SpotifyLabel = new Lang.Class({
 
 		this.buttonText = new St.Label({
 			text: _("Loading..."),
-			style: "padding-left: " + this.settings.get_int('left-padding') + "px;",
+			style: "padding-left: " + this.settings.get_int('left-padding') + "px;"
+				 + "padding-right: " + this.settings.get_int('right-padding') + "px; ",
 			y_align: Clutter.ActorAlign.CENTER,
 			x_align: Clutter.ActorAlign.FILL
 		});
