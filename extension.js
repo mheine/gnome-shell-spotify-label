@@ -56,7 +56,7 @@ const SpotifyLabel = new Lang.Class({
 		this.actor.add_actor(topBox);
 
 		//Place the actor/label at the "end" (rightmost) position within the left box
-		children = Main.panel._leftBox.get_children();
+		let children = Main.panel._leftBox.get_children();
 		Main.panel._leftBox.insert_child_at_index(this.actor, children.length)
 
 		this._refresh();
@@ -91,11 +91,19 @@ const SpotifyLabel = new Lang.Class({
 	},
 
 	_loadData: function () {
+		var player = getPlayer();
+		if (!player) {
+			// don't show anything in label if no player is open
+			this._refreshUI('');
+			return;
+		}
+		//player = 'vlc'; // testing
+		global.log(`\n\nSpotifyLabel: player: ${player}`);
 
 		let [res, out, err, status] = [];
 		try {
 			//Use GLib to send a dbus request with the expectation of receiving an MPRIS v2 response.
-			[res, out, err, status] = GLib.spawn_command_line_sync("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:org.mpris.MediaPlayer2.Player string:Metadata");
+			[res, out, err, status] = GLib.spawn_command_line_sync(`dbus-send --print-reply --dest=org.mpris.MediaPlayer2.${player} /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:org.mpris.MediaPlayer2.Player string:Metadata`);
 		}
 		catch(err) {
 			this._refreshUI("Error. Please check system logs.");
@@ -222,10 +230,17 @@ function parseSpotifyData(data) {
 	if(!data)
 		return createGreeting()
 
-	var titleBlock = data.substring(data.indexOf("xesam:title"));
+	const titleIndex = data.indexOf("xesam:title");
+	const artistIndex = data.indexOf("xesam:artist");
+
+	// If no title or artist entry, don't show anything (maybe createGretting?)
+	if (titleIndex == -1 || artistIndex == -1)
+		return '';
+
+	var titleBlock = data.substring(titleIndex);
 	var title = titleBlock.split("\"")[2]
 
-	var artistBlock = data.substring(data.indexOf("xesam:artist"));
+	var artistBlock = data.substring(artistIndex);
 	var artist = artistBlock.split("\"")[2]
 
 	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
@@ -269,6 +284,30 @@ function toggleWindow() {
 			}
 		}
 		Main.activateWindow(spotifyWindow); // switch to Spotify
+	}
+}
+
+const players = [
+	'amazrok',
+	'vvave',
+	'elisa', // installed
+	'juk',
+	'plasma-media-center',
+	'gwenview', // an image viewer ????????
+	'plasma-browser-integration',
+	'idea-okular', // (presentation)
+	'vlc', // installed
+	'spotify', // installed
+];
+
+function getPlayer() {
+	for (var i = 0; i < players.length; i++) {
+		const player = players[i];
+
+		let [res, out, err, status] = GLib.spawn_command_line_sync(`pgrep -i -x "${player}"`);
+
+		if (out.length > 0)
+			return player;
 	}
 }
 
