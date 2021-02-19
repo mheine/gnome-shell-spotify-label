@@ -299,19 +299,21 @@ const players = {
 	amazrok: 'amazrok',
 	vvave: 'vvave',
 	elisa: 'elisa', // installed, works
-	juk: 'juk',
+	juk: 'juk',		// installed, works
 	plasma_media_center: 'plasma-media-center', // '_' might be '-'
 	gwenview: 'gwenview', // an image viewer ????????
 	plasma_browser_integration: 'plasma-browser-integration',
 	idea_okular: 'idea-okular', // (presentation) ('_' might be @, or maybe even ':' ?)
-	vlc: 'vlc', // installed, works
-	spotify: 'spotify', // installed, works
+	vlc: 'vlc',		// installed, works
+	Spotify: 'spotify', // installed, works
+	Clementine: 'clementine',
+	Rhythmbox: 'rhythmbox',	// installed, works
 }
 
 function getPlayer() {
 	// get the names(? - is it the names?) of the current open windows
 	let windowActors = global.get_window_actors();
-	let windowNames = windowActors.map(w => w.get_meta_window().get_wm_class().toLowerCase());
+	let windowNames = windowActors.map(w => w.get_meta_window().get_wm_class());
 
 	// debug
 	global.log('\n'+windowNames);
