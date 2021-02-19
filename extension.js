@@ -98,7 +98,7 @@ const SpotifyLabel = new Lang.Class({
 			return;
 		}
 		//player = 'vlc'; // testing
-		global.log(`\n\nSpotifyLabel: player: ${player}`);
+		global.log(`\nSpotifyLabel: player: ${player}`);
 
 		let [res, out, err, status] = [];
 		try {
@@ -287,28 +287,41 @@ function toggleWindow() {
 	}
 }
 
-const players = [
-	'amazrok',
-	'vvave',
-	'elisa', // installed
-	'juk',
-	'plasma-media-center',
-	'gwenview', // an image viewer ????????
-	'plasma-browser-integration',
-	'idea-okular', // (presentation)
-	'vlc', // installed
-	'spotify', // installed
-];
+/*
+Javascript Object is implemented using a HashTable (https://stackoverflow.com/a/24196259).
+So to enable faster checking for players, 'players' should be implemented as an Object instead of an Array. Then
+we can just iterate through the current open windows and check if that window is in players. Thus O(n) instead
+of O(n^2) of checking if the window is in the players array. The Object should map the 'window_actor.meta_window.wm_class'
+(i.e. what is given after mapping a windowActor to its name) to the name that is used to identify the path in the dbus-send
+command.
+*/
+const players = {
+	amazrok: 'amazrok',
+	vvave: 'vvave',
+	elisa: 'elisa', // installed, works
+	juk: 'juk',
+	plasma_media_center: 'plasma-media-center', // '_' might be '-'
+	gwenview: 'gwenview', // an image viewer ????????
+	plasma_browser_integration: 'plasma-browser-integration',
+	idea_okular: 'idea-okular', // (presentation) ('_' might be @, or maybe even ':' ?)
+	vlc: 'vlc', // installed, works
+	spotify: 'spotify', // installed, works
+}
 
 function getPlayer() {
-	for (var i = 0; i < players.length; i++) {
-		const player = players[i];
+	// get the names(? - is it the names?) of the current open windows
+	let windowActors = global.get_window_actors();
+	let windowNames = windowActors.map(w => w.get_meta_window().get_wm_class().toLowerCase());
 
-		let [res, out, err, status] = GLib.spawn_command_line_sync(`pgrep -i -x "${player}"`);
+	// debug
+	global.log('\n'+windowNames);
 
-		if (out.length > 0)
-			return player;
+	for (let windowName of windowNames) {
+		if (players[windowName])
+			return players[windowName];
 	}
+
+	global.log('\nSpotifyLabel: no player open!'); //debug
 }
 
 let genres = ["DnB", "Synthwave", "Dubstep", "Pop", "House", "Hardstyle", "Rock", "8-bit", "Classical", "Electro"]
