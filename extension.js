@@ -97,8 +97,6 @@ const SpotifyLabel = new Lang.Class({
 			this._refreshUI('');
 			return;
 		}
-		//player = 'vlc'; // testing
-		global.log(`\nSpotifyLabel: player: ${player}`);
 
 		let [res, out, err, status] = [];
 		try {
@@ -296,18 +294,16 @@ of O(n^2) of checking if the window is in the players array. The Object should m
 command.
 */
 const players = {
-	amazrok: 'amazrok',
-	vvave: 'vvave',
-	elisa: 'elisa', // installed, works
-	juk: 'juk',		// installed, works
-	plasma_media_center: 'plasma-media-center', // '_' might be '-'
-	gwenview: 'gwenview', // an image viewer ????????
-	plasma_browser_integration: 'plasma-browser-integration',
-	idea_okular: 'idea-okular', // (presentation) ('_' might be @, or maybe even ':' ?)
-	vlc: 'vlc',		// installed, works
-	Spotify: 'spotify', // installed, works
+	amarok: 'amarok',			// not sure if works
+	vvave: 'vvave',				// not sure if works
+	elisa: 'elisa',
+	juk: 'juk',
+	plasma_media_center: 'plasma-media-center', 			  // not sure if works
+	plasma_browser_integration: 'plasma-browser-integration', // not sure if works
+	vlc: 'vlc',
+	Spotify: 'spotify',
 	Clementine: 'clementine',
-	Rhythmbox: 'rhythmbox',	// installed, works
+	Rhythmbox: 'rhythmbox',
 }
 
 function getPlayer() {
@@ -315,15 +311,10 @@ function getPlayer() {
 	let windowActors = global.get_window_actors();
 	let windowNames = windowActors.map(w => w.get_meta_window().get_wm_class());
 
-	// debug
-	global.log('\n'+windowNames);
-
 	for (let windowName of windowNames) {
 		if (players[windowName])
 			return players[windowName];
 	}
-
-	global.log('\nSpotifyLabel: no player open!'); //debug
 }
 
 let genres = ["DnB", "Synthwave", "Dubstep", "Pop", "House", "Hardstyle", "Rock", "8-bit", "Classical", "Electro"]
