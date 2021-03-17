@@ -1,12 +1,16 @@
-const St = imports.gi.St;
-const Main = imports.ui.main;
+const Clutter = imports.gi.Clutter;
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const Soup = imports.gi.Soup;
+const St = imports.gi.St;
+
+const Main = imports.ui.main;
+const PanelMenu = imports.ui.panelMenu;
+
+const ByteArray = imports.byteArray;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
-const Clutter = imports.gi.Clutter;
-const PanelMenu = imports.ui.panelMenu;
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
@@ -56,7 +60,7 @@ const SpotifyLabel = new Lang.Class({
 		this.actor.add_actor(topBox);
 
 		//Place the actor/label at the "end" (rightmost) position within the left box
-		children = Main.panel._leftBox.get_children();
+		let children = Main.panel._leftBox.get_children();
 		Main.panel._leftBox.insert_child_at_index(this.actor, children.length)
 
 		this._refresh();
@@ -91,11 +95,17 @@ const SpotifyLabel = new Lang.Class({
 	},
 
 	_loadData: function () {
+		var player = getPlayer();
+		if (!player) {
+			// don't show anything in label if no player is open
+			this._refreshUI('');
+			return;
+		}
 
 		let [res, out, err, status] = [];
 		try {
 			//Use GLib to send a dbus request with the expectation of receiving an MPRIS v2 response.
-			[res, out, err, status] = GLib.spawn_command_line_sync("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:org.mpris.MediaPlayer2.Player string:Metadata");
+			[res, out, err, status] = GLib.spawn_command_line_sync(`dbus-send --print-reply --dest=org.mpris.MediaPlayer2.${player} /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:org.mpris.MediaPlayer2.Player string:Metadata`);
 		}
 		catch(err) {
 			this._refreshUI("Error. Please check system logs.");
@@ -103,7 +113,7 @@ const SpotifyLabel = new Lang.Class({
 			return;
 		}
 
-		var labelstring = parseSpotifyData(out.toString());
+		var labelstring = parseSpotifyData(ByteArray.toString(out));
 		this._refreshUI(labelstring);
 	},
 
@@ -222,10 +232,17 @@ function parseSpotifyData(data) {
 	if(!data)
 		return createGreeting()
 
-	var titleBlock = data.substring(data.indexOf("xesam:title"));
+	const titleIndex = data.indexOf("xesam:title");
+	const artistIndex = data.indexOf("xesam:artist");
+
+	// If no title or artist entry, don't show anything (maybe createGretting?)
+	if (titleIndex == -1 || artistIndex == -1)
+		return '';
+
+	var titleBlock = data.substring(titleIndex);
 	var title = titleBlock.split("\"")[2]
 
-	var artistBlock = data.substring(data.indexOf("xesam:artist"));
+	var artistBlock = data.substring(artistIndex);
 	var artist = artistBlock.split("\"")[2]
 
 	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
@@ -269,6 +286,38 @@ function toggleWindow() {
 			}
 		}
 		Main.activateWindow(spotifyWindow); // switch to Spotify
+	}
+}
+
+/*
+Javascript Object is implemented using a HashTable (https://stackoverflow.com/a/24196259).
+So to enable faster checking for players, 'players' should be implemented as an Object instead of an Array. Then
+we can just iterate through the current open windows and check if that window is in players. Thus O(n) instead
+of O(n^2) of checking if the window is in the players array. The Object should map the 'window_actor.meta_window.wm_class'
+(i.e. what is given after mapping a windowActor to its name) to the name that is used to identify the path in the dbus-send
+command.
+*/
+const players = {
+	amarok: 'amarok',			// not sure if works
+	vvave: 'vvave',				// not sure if works
+	elisa: 'elisa',
+	juk: 'juk',
+	plasma_media_center: 'plasma-media-center', 			  // not sure if works
+	plasma_browser_integration: 'plasma-browser-integration', // not sure if works
+	vlc: 'vlc',
+	Spotify: 'spotify',
+	Clementine: 'clementine',
+	Rhythmbox: 'rhythmbox',
+}
+
+function getPlayer() {
+	// get the names(? - is it the names?) of the current open windows
+	let windowActors = global.get_window_actors();
+	let windowNames = windowActors.map(w => w.get_meta_window().get_wm_class());
+
+	for (let windowName of windowNames) {
+		if (players[windowName])
+			return players[windowName];
 	}
 }
 
