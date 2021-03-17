@@ -1,12 +1,16 @@
-const St = imports.gi.St;
-const Main = imports.ui.main;
+const Clutter = imports.gi.Clutter;
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const Soup = imports.gi.Soup;
+const St = imports.gi.St;
+
+const Main = imports.ui.main;
+const PanelMenu = imports.ui.panelMenu;
+
+const ByteArray = imports.byteArray;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
-const Clutter = imports.gi.Clutter;
-const PanelMenu = imports.ui.panelMenu;
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
@@ -109,7 +113,7 @@ const SpotifyLabel = new Lang.Class({
 			return;
 		}
 
-		var labelstring = parseSpotifyData(out.toString());
+		var labelstring = parseSpotifyData(ByteArray.toString(out));
 		this._refreshUI(labelstring);
 	},
 
