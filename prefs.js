@@ -212,6 +212,24 @@ function buildPrefsWidget() {
     index++;
     prefsWidget.attach(toggleWindowLabel, 0, index, 1, 1);
     prefsWidget.attach(toggleWindowSwitch, 1, index, 1, 1);
+    
+    /* show-next-prev-buttons */
+    let showNextPrevButtonsLabel = new Gtk.Label({
+        label: 'Show next and previous buttons:',
+        halign: Gtk.Align.START,
+        visible: true
+    });
+
+    let showNextPrevButtonsSwitch = new Gtk.Switch({
+    	valign: Gtk.Align.END,
+    	halign: Gtk.Align.END,
+    	visible: true
+    });
+
+    index++;
+    prefsWidget.attach(showNextPrevButtonsLabel, 0, index, 1, 1);
+    prefsWidget.attach(showNextPrevButtonsSwitch, 1, index, 1, 1);
+    
 
 
     //settings.bind('command', commandEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
@@ -222,6 +240,7 @@ function buildPrefsWidget() {
     settings.bind('friendly-greeting', friendlyGreetingSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('artist-first', artistFirstSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('toggle-window', toggleWindowSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('show-next-prev-buttons', showNextPrevButtonsSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     extensionPlaceComboBox.connect('changed', Lang.bind(this, function(widget) {
         settings.set_string('extension-place', options[widget.get_active()]);
       }));

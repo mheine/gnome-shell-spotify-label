@@ -25,14 +25,41 @@ const SpotifyLabel = new Lang.Class({
 
 		this.settings = settings;
 
-		this.buttonText = new St.Label({
-			text: _("Loading..."),
+		this.buttonText = new St.Button({
+		  accessible_name: "PlayPause",
+		  toggle_mode: true,
+			label: _("Loading..."),
 			style: "padding-left: " + this.settings.get_int('left-padding') + "px;"
 				 + "padding-right: " + this.settings.get_int('right-padding') + "px; ",
 			y_align: Clutter.ActorAlign.CENTER,
 			x_align: Clutter.ActorAlign.FILL
 		});
-
+		
+		this.nextButton = new St.Button({
+		  accessible_name: "Next",
+		  style_class: "panel-status-button"
+		});
+		this.nextButton.add_actor(
+		  new St.Icon({
+          gicon: Gio.icon_new_for_string(Me.dir.get_child('icons').get_path() + "/" + "next.svg"),
+          style_class: "system-status-icon"
+      })
+    );
+		this.nextButton.connect('clicked',sendDBusCommand);
+		
+		this.prevButton = new St.Button({
+		  accessible_name: "Previous",
+		  style_class: "panel-status-button"
+		});
+		this.prevButton.add_actor(
+		  new St.Icon({
+          gicon: Gio.icon_new_for_string(Me.dir.get_child('icons').get_path() + "/" + "prev.svg"),
+          style_class: "system-status-icon"
+      })
+    );
+		this.prevButton.connect('clicked',sendDBusCommand);
+		
+		
 		// Listen for update of padding in settings
 		onLeftPaddingChanged = this.settings.connect(
 			'changed::left-padding',
@@ -48,11 +75,26 @@ const SpotifyLabel = new Lang.Class({
 			'changed::toggle-window',
 			this._toggleModeChanged.bind(this)
 		);
+		
 		this._toggleModeChanged(); // checks and connects the toggle button
+
+
+		onShowNextPrevModeChanged = this.settings.connect(
+			'changed::show-next-prev-buttons',
+			this._nextPrevButtonChanged.bind(this)
+		);
+		this._toggleModeChanged();
+		
 
 		// Create a new layout, add the text and add the actor to the layout
 		let topBox = new St.BoxLayout();
 		topBox.add(this.buttonText);
+	  topBox.add(this.prevButton);
+	  topBox.add(this.nextButton);
+		
+		
+		this.buttonText.connect('clicked',sendDBusCommand);
+		
 		this.actor.add_actor(topBox);
 
 		//Place the actor/label at the "end" (rightmost) position within the left box
@@ -70,6 +112,17 @@ const SpotifyLabel = new Lang.Class({
 	_rightPaddingChanged: function() {
 		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
 				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
+	},
+	
+	_nextPrevButtonChanged: function() {
+	  if(this.settings.get_boolean('show-next-prev-buttons')){
+	    this.prevButton.show();
+	    this.nextButton.show();
+	  }else{
+	    this.prevButton.hide();
+	    this.nextButton.hide();
+	  }
+	  this._refresh();
 	},
 
 	// Update labelEventListener if toggle mode changes
@@ -109,7 +162,7 @@ const SpotifyLabel = new Lang.Class({
 
 	_refreshUI: function (data) {
 		let txt = data.toString();
-		this.buttonText.set_text(txt);
+		this.buttonText.set_label(txt);
 	},
 
 	_removeTimeout: function () {
@@ -132,6 +185,22 @@ const SpotifyLabel = new Lang.Class({
 	}
 }
 );
+
+function sendDBusCommand(command)
+{
+ //   log("Spotify: performing action - " + command.toString())
+   // log("Spotify: accessible name is: " + command.accessible_name.toString())
+    let [res, out, err, status] = [];
+		try {
+			//Use GLib to send a dbus request with the expectation of receiving an MPRIS v2 response.
+			[res, out, err, status] = GLib.spawn_command_line_sync("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player."+command.accessible_name.toString());
+		}
+		catch(err) {
+			_refreshUI("Error. Please check system logs.");
+			global.log("spotifylabel: res: " + res + " -- status: " + status + " -- err:" + err);
+			return;
+		}
+}
 
 function init() {
 }

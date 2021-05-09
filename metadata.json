@@ -1,1 +1,6 @@
-{"name": "Spotify Song Label", "description": "Show the currently playing song on Spotify in the top bar", "uuid": "gnomespotifylabel@mheine.github.com", "shell-version": ["3.36.4"]}
+{
+	"name": "Spotify Song Label", 
+	"description": "Show the currently playing song on Spotify in the top bar", 
+	"uuid": "gnomespotifylabel@narixius.github.com", 
+	"shell-version": ["3.36.4"]
+}
