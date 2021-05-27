@@ -10,7 +10,6 @@ const Gio = imports.gi.Gio;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
-//"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
 let LEFT_PADDING,
   RIGHT_PADDING,
   MAX_STRING_LENGTH,
@@ -28,7 +27,8 @@ var settings,
   onRightPaddingChanged,
   onExtensionPlaceChanged,
   onExtensionIndexChanged,
-  onToggleModeChanged;
+  onToggleModeChanged,
+  onNextPrevButtonsDisplayChanged;
 let _httpSession;
 let spMenu;
 
@@ -40,6 +40,8 @@ const SpotifyLabel = new Lang.Class({
   _init: function (settings) {
     this.parent(0.0, 'Spotify Label', false);
     this.settings = settings;
+
+    // init lable button
     this.buttonText = new St.Button({
       accessible_name: 'PlayPause',
       toggle_mode: true,
@@ -54,7 +56,26 @@ const SpotifyLabel = new Lang.Class({
       y_align: Clutter.ActorAlign.CENTER,
       x_align: Clutter.ActorAlign.FILL,
     });
+    this.buttonText.connect('clicked', sendDBusCommand);
 
+    this.initNextPrevButtons();
+    this.settignsUpdateListeners();
+
+    // create box layout and add buttons to it
+    let topBox = new St.BoxLayout();
+    topBox.add(this.buttonText);
+    topBox.add(this.prevButton);
+    topBox.add(this.nextButton);
+
+    this.actor.add_actor(topBox);
+
+    //Place the actor/label at the "end" (rightmost) position within the left box
+    children = Main.panel._leftBox.get_children();
+    Main.panel._leftBox.insert_child_at_index(this.actor, children.length);
+
+    this._refresh();
+  },
+  initNextPrevButtons() {
     this.nextButton = new St.Button({
       accessible_name: 'Next',
       style_class: 'panel-status-button',
@@ -73,6 +94,7 @@ const SpotifyLabel = new Lang.Class({
       accessible_name: 'Previous',
       style_class: 'panel-status-button',
     });
+
     this.prevButton.add_actor(
       new St.Icon({
         gicon: Gio.icon_new_for_string(
@@ -82,7 +104,8 @@ const SpotifyLabel = new Lang.Class({
       })
     );
     this.prevButton.connect('clicked', sendDBusCommand);
-
+  },
+  settignsUpdateListeners() {
     // Listen for update of padding in settings
     onLeftPaddingChanged = this.settings.connect(
       'changed::left-padding',
@@ -100,28 +123,11 @@ const SpotifyLabel = new Lang.Class({
     );
 
     this._toggleModeChanged(); // checks and connects the toggle button
-
-    onShowNextPrevModeChanged = this.settings.connect(
+    onNextPrevButtonsDisplayChanged = this.settings.connect(
       'changed::show-next-prev-buttons',
-      this._nextPrevButtonChanged.bind(this)
+      this._nextPrevButtonsDisplayChanged.bind(this)
     );
-    this._toggleModeChanged();
-
-    // Create a new layout, add the text and add the actor to the layout
-    let topBox = new St.BoxLayout();
-    topBox.add(this.buttonText);
-    topBox.add(this.prevButton);
-    topBox.add(this.nextButton);
-
-    this.buttonText.connect('clicked', sendDBusCommand);
-
-    this.actor.add_actor(topBox);
-
-    //Place the actor/label at the "end" (rightmost) position within the left box
-    children = Main.panel._leftBox.get_children();
-    Main.panel._leftBox.insert_child_at_index(this.actor, children.length);
-
-    this._refresh();
+    this._nextPrevButtonsDisplayChanged();
   },
 
   // Update padding of this.buttonText according to new value set in settings
@@ -146,7 +152,7 @@ const SpotifyLabel = new Lang.Class({
     );
   },
 
-  _nextPrevButtonChanged: function () {
+  _nextPrevButtonsDisplayChanged: function () {
     if (this.settings.get_boolean('show-next-prev-buttons')) {
       this.prevButton.show();
       this.nextButton.show();
@@ -202,25 +208,26 @@ const SpotifyLabel = new Lang.Class({
 
   _refreshUI: function (data) {
     let txt = data.toString();
+
+    // check for ads muting
     if (txt.length > 2) {
-      this.nextButton.show();
-      this.prevButton.show();
-    } else {
-      this.nextButton.hide();
-      this.prevButton.hide();
-    }
-    if (txt.length > 2) {
+      // if spotify is muted before, unmute it when for the first time playing music.
       if (!this.unMuteOnInit && this.isSpotifyMuted()) {
         this.unMuteSpotify();
         this.unMuteOnInit = true;
       }
-
-      if (txt.indexOf('Advertisement') !== -1) {
-        //   if (txt == 'Advertisement - ') {
-        let res = this.muteSpotify();
-        if (res) txt = 'Advertisement (muted)';
-        else txt = 'Ads... (unable to muted)';
+      // if it is an ads, mute it
+      if (
+        txt.indexOf('Advertisement -') !== -1 ||
+        txt.indexOf('Spotify -') !== -1
+      ) {
+        if (this.settings.get_boolean('ads-muter')) {
+          let res = this.muteSpotify();
+          if (res) txt = 'Advertisement (muted)';
+          else txt = 'Ads... (unable to muted)';
+        }
       } else {
+        // if this extension muted spotify, unmute it.
         if (this.extentionMutedSpotify) this.unMuteSpotify();
       }
     }
@@ -378,6 +385,7 @@ function disable() {
   this.settings.disconnect(onExtensionPlaceChanged);
   this.settings.disconnect(onExtensionIndexChanged);
   this.settings.disconnect(onToggleModeChanged);
+  this.settings.disconnect(onNextPrevButtonsDisplayChanged);
 
   spMenu.stop();
   spMenu.destroy();
