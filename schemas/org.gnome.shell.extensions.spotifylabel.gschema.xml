@@ -31,5 +31,8 @@
     <key name="show-next-prev-buttons" type="b">
       <default>true</default>
     </key>
+    <key name="ads-muter" type="b">
+      <default>true</default>
+    </key>
   </schema>
 </schemalist>
