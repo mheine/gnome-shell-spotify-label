@@ -245,11 +245,11 @@ function parseSpotifyData(data) {
 
   let spotifyInfo = [artist, "-", title];
   if (this.settings.get_boolean('lowercase')) {
-    spotifyInfo = spotifyInfo.map(function(str) {
+    spotifyInfo = spotifyInfo.map(function (str) {
       return str.toLowerCase();
     });
   }
-  
+
   if (this.settings.get_boolean('artist-first')) {
     return spotifyInfo.join(' ');
   } else {
