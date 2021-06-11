@@ -19,6 +19,9 @@
     <key name="artist-first" type="b">
       <default>false</default>
     </key>
+    <key name="lowercase" type="b">
+      <default>false</default>
+    </key>
     <key name="extension-place" type="s">
       <default>'left'</default>
     </key>

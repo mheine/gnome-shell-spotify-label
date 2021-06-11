@@ -17,119 +17,119 @@ let _httpSession;
 let spMenu;
 
 const SpotifyLabel = new Lang.Class({
-	Name: 'SpotifyLabel',
-	Extends: PanelMenu.Button,
+  Name: 'SpotifyLabel',
+  Extends: PanelMenu.Button,
 
-	_init: function (settings) {
-		this.parent(0.0, "Spotify Label", false);
+  _init: function (settings) {
+    this.parent(0.0, "Spotify Label", false);
 
-		this.settings = settings;
+    this.settings = settings;
 
-		this.buttonText = new St.Label({
-			text: _("Loading..."),
-			style: "padding-left: " + this.settings.get_int('left-padding') + "px;"
-				 + "padding-right: " + this.settings.get_int('right-padding') + "px; ",
-			y_align: Clutter.ActorAlign.CENTER,
-			x_align: Clutter.ActorAlign.FILL
-		});
+    this.buttonText = new St.Label({
+      text: _("Loading..."),
+      style: "padding-left: " + this.settings.get_int('left-padding') + "px;"
+        + "padding-right: " + this.settings.get_int('right-padding') + "px; ",
+      y_align: Clutter.ActorAlign.CENTER,
+      x_align: Clutter.ActorAlign.FILL
+    });
 
-		// Listen for update of padding in settings
-		onLeftPaddingChanged = this.settings.connect(
-			'changed::left-padding',
-			this._leftPaddingChanged.bind(this)
-		);
-		onRightPaddingChanged = this.settings.connect(
-			'changed::right-padding',
-			this._rightPaddingChanged.bind(this)
-		);
+    // Listen for update of padding in settings
+    onLeftPaddingChanged = this.settings.connect(
+      'changed::left-padding',
+      this._leftPaddingChanged.bind(this)
+    );
+    onRightPaddingChanged = this.settings.connect(
+      'changed::right-padding',
+      this._rightPaddingChanged.bind(this)
+    );
 
-		// Listen for changes in the toggle feature
-		onToggleModeChanged = this.settings.connect(
-			'changed::toggle-window',
-			this._toggleModeChanged.bind(this)
-		);
-		this._toggleModeChanged(); // checks and connects the toggle button
+    // Listen for changes in the toggle feature
+    onToggleModeChanged = this.settings.connect(
+      'changed::toggle-window',
+      this._toggleModeChanged.bind(this)
+    );
+    this._toggleModeChanged(); // checks and connects the toggle button
 
-		// Create a new layout, add the text and add the actor to the layout
-		let topBox = new St.BoxLayout();
-		topBox.add(this.buttonText);
-		this.actor.add_actor(topBox);
+    // Create a new layout, add the text and add the actor to the layout
+    let topBox = new St.BoxLayout();
+    topBox.add(this.buttonText);
+    this.actor.add_actor(topBox);
 
-		//Place the actor/label at the "end" (rightmost) position within the left box
-		children = Main.panel._leftBox.get_children();
-		Main.panel._leftBox.insert_child_at_index(this.actor, children.length)
+    //Place the actor/label at the "end" (rightmost) position within the left box
+    children = Main.panel._leftBox.get_children();
+    Main.panel._leftBox.insert_child_at_index(this.actor, children.length)
 
-		this._refresh();
-	},
+    this._refresh();
+  },
 
-	// Update padding of this.buttonText according to new value set in settings
-	_leftPaddingChanged: function() {
-		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
-				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
-	},
-	_rightPaddingChanged: function() {
-		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
-				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
-	},
+  // Update padding of this.buttonText according to new value set in settings
+  _leftPaddingChanged: function () {
+    this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
+      + "padding-right: " + this.settings.get_int('right-padding') + "px; ");
+  },
+  _rightPaddingChanged: function () {
+    this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
+      + "padding-right: " + this.settings.get_int('right-padding') + "px; ");
+  },
 
-	// Update labelEventListener if toggle mode changes
-	_toggleModeChanged: function () {
-		spotifyWindow = nonSpotifyWindow = null;
-		if (settings.get_boolean('toggle-window')) {
-			this.toggleModeID = this.actor.connect('button-press-event', toggleWindow);
-		} else {
-			this.actor.disconnect(this.toggleModeID);
-		}
-	},
+  // Update labelEventListener if toggle mode changes
+  _toggleModeChanged: function () {
+    spotifyWindow = nonSpotifyWindow = null;
+    if (settings.get_boolean('toggle-window')) {
+      this.toggleModeID = this.actor.connect('button-press-event', toggleWindow);
+    } else {
+      this.actor.disconnect(this.toggleModeID);
+    }
+  },
 
-	//Defind the refreshing function and set the timeout in seconds
-	_refresh: function () {
-		this._loadData(this._refreshUI);
-		this._removeTimeout();
-		this._timeout = Mainloop.timeout_add_seconds(this.settings.get_int('refresh-rate'), Lang.bind(this, this._refresh));
-		return true;
-	},
+  //Defind the refreshing function and set the timeout in seconds
+  _refresh: function () {
+    this._loadData(this._refreshUI);
+    this._removeTimeout();
+    this._timeout = Mainloop.timeout_add_seconds(this.settings.get_int('refresh-rate'), Lang.bind(this, this._refresh));
+    return true;
+  },
 
-	_loadData: function () {
+  _loadData: function () {
 
-		let [res, out, err, status] = [];
-		try {
-			//Use GLib to send a dbus request with the expectation of receiving an MPRIS v2 response.
-			[res, out, err, status] = GLib.spawn_command_line_sync("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:org.mpris.MediaPlayer2.Player string:Metadata");
-		}
-		catch(err) {
-			this._refreshUI("Error. Please check system logs.");
-			global.log("spotifylabel: res: " + res + " -- status: " + status + " -- err:" + err);
-			return;
-		}
+    let [res, out, err, status] = [];
+    try {
+      //Use GLib to send a dbus request with the expectation of receiving an MPRIS v2 response.
+      [res, out, err, status] = GLib.spawn_command_line_sync("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:org.mpris.MediaPlayer2.Player string:Metadata");
+    }
+    catch (err) {
+      this._refreshUI("Error. Please check system logs.");
+      global.log("spotifylabel: res: " + res + " -- status: " + status + " -- err:" + err);
+      return;
+    }
 
-		var labelstring = parseSpotifyData(out.toString());
-		this._refreshUI(labelstring);
-	},
+    var labelstring = parseSpotifyData(out.toString());
+    this._refreshUI(labelstring);
+  },
 
-	_refreshUI: function (data) {
-		let txt = data.toString();
-		this.buttonText.set_text(txt);
-	},
+  _refreshUI: function (data) {
+    let txt = data.toString();
+    this.buttonText.set_text(txt);
+  },
 
-	_removeTimeout: function () {
-		if (this._timeout) {
-			Mainloop.source_remove(this._timeout);
-			this._timeout = null;
-		}
-	},
+  _removeTimeout: function () {
+    if (this._timeout) {
+      Mainloop.source_remove(this._timeout);
+      this._timeout = null;
+    }
+  },
 
-	stop: function () {
-		if (_httpSession !== undefined)
-			_httpSession.abort();
-		_httpSession = undefined;
+  stop: function () {
+    if (_httpSession !== undefined)
+      _httpSession.abort();
+    _httpSession = undefined;
 
-		if (this._timeout)
-			Mainloop.source_remove(this._timeout);
-		this._timeout = undefined;
+    if (this._timeout)
+      Mainloop.source_remove(this._timeout);
+    this._timeout = undefined;
 
-		this.menu.removeAll();
-	}
+    this.menu.removeAll();
+  }
 }
 );
 
@@ -138,138 +138,147 @@ function init() {
 
 function enable() {
 
-	// Load schema
-	gschema = Gio.SettingsSchemaSource.new_from_directory(
-        Me.dir.get_child('schemas').get_path(),
-        Gio.SettingsSchemaSource.get_default(),
-        false
-    );
+  // Load schema
+  gschema = Gio.SettingsSchemaSource.new_from_directory(
+    Me.dir.get_child('schemas').get_path(),
+    Gio.SettingsSchemaSource.get_default(),
+    false
+  );
 
-	// Load settings
-    settings = new Gio.Settings({
-        settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
-	});
+  // Load settings
+  settings = new Gio.Settings({
+    settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
+  });
 
-	// Mandatory for removing the spMenu from the correct location
-	this.lastExtensionPlace = settings.get_string('extension-place');
-	this.lastExtensionIndex = settings.get_int('extension-index');
+  // Mandatory for removing the spMenu from the correct location
+  this.lastExtensionPlace = settings.get_string('extension-place');
+  this.lastExtensionIndex = settings.get_int('extension-index');
 
-	onExtensionPlaceChanged = this.settings.connect(
-		'changed::extension-place',
-		this.onExtensionLocationChanged.bind(this)
-	);
+  onExtensionPlaceChanged = this.settings.connect(
+    'changed::extension-place',
+    this.onExtensionLocationChanged.bind(this)
+  );
 
-	onExtensionIndexChanged = this.settings.connect(
-		'changed::extension-index',
-		this.onExtensionLocationChanged.bind(this)
-	);
+  onExtensionIndexChanged = this.settings.connect(
+    'changed::extension-index',
+    this.onExtensionLocationChanged.bind(this)
+  );
 
-	let spotifyWindow, nonSpotifyWindow; // used by the switcher - greyed out in most editors
+  let spotifyWindow, nonSpotifyWindow; // used by the switcher - greyed out in most editors
 
-	spMenu = new SpotifyLabel(settings);
-	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
+  spMenu = new SpotifyLabel(settings);
+  Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
 }
 
 function disable() {
-	this.settings.disconnect(onLeftPaddingChanged);
-	this.settings.disconnect(onRightPaddingChanged);
-	this.settings.disconnect(onExtensionPlaceChanged);
-	this.settings.disconnect(onExtensionIndexChanged);
-	this.settings.disconnect(onToggleModeChanged);
+  this.settings.disconnect(onLeftPaddingChanged);
+  this.settings.disconnect(onRightPaddingChanged);
+  this.settings.disconnect(onExtensionPlaceChanged);
+  this.settings.disconnect(onExtensionIndexChanged);
+  this.settings.disconnect(onToggleModeChanged);
 
-	spMenu.stop();
-	spMenu.destroy();
+  spMenu.stop();
+  spMenu.destroy();
 }
 
 // Removes spMenu from correct location and then adds it to new one
-function onExtensionLocationChanged (settings, key) {
-	const newExtensionPlace = this.settings.get_string('extension-place');
-	const newExtensionIndex = this.settings.get_int('extension-index');
+function onExtensionLocationChanged(settings, key) {
+  const newExtensionPlace = this.settings.get_string('extension-place');
+  const newExtensionIndex = this.settings.get_int('extension-index');
 
-	if (this.lastExtensionPlace !== newExtensionPlace
-			|| this.lastExtensionIndex !== newExtensionIndex) {
+  if (this.lastExtensionPlace !== newExtensionPlace
+    || this.lastExtensionIndex !== newExtensionIndex) {
 
-		switch (this.lastExtensionPlace) {
-			case 'left':
-				Main.panel._leftBox.remove_actor(spMenu.container);
-				break;
-			case 'center':
-				Main.panel._centerBox.remove_actor(spMenu.container);
-				break;
-			default:
-				Main.panel._rightBox.remove_actor(spMenu.container);
-		}
+    switch (this.lastExtensionPlace) {
+      case 'left':
+        Main.panel._leftBox.remove_actor(spMenu.container);
+        break;
+      case 'center':
+        Main.panel._centerBox.remove_actor(spMenu.container);
+        break;
+      default:
+        Main.panel._rightBox.remove_actor(spMenu.container);
+    }
 
-		this.lastExtensionPlace = newExtensionPlace;
-		this.lastExtensionIndex = newExtensionIndex;
+    this.lastExtensionPlace = newExtensionPlace;
+    this.lastExtensionIndex = newExtensionIndex;
 
-		switch (newExtensionPlace) {
-			case 'left':
-				Main.panel._leftBox.insert_child_at_index(spMenu.container, newExtensionIndex);
-				break;
-			case 'center':
-				Main.panel._centerBox.insert_child_at_index(spMenu.container, newExtensionIndex);
-				break;
-			default:
-				Main.panel._rightBox.insert_child_at_index(spMenu.container, newExtensionIndex);
-		}
-	}
+    switch (newExtensionPlace) {
+      case 'left':
+        Main.panel._leftBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+        break;
+      case 'center':
+        Main.panel._centerBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+        break;
+      default:
+        Main.panel._rightBox.insert_child_at_index(spMenu.container, newExtensionIndex);
+    }
+  }
 }
 
 //Spotify uses MIPRIS v2, and as such the metadata fields are prefixed by 'xesam'
 //We use this info to set our limits,and assume the data is properly escaped within quotes.
 function parseSpotifyData(data) {
-	if(!data)
-		return createGreeting()
+  if (!data)
+    return createGreeting()
 
-	var titleBlock = data.substring(data.indexOf("xesam:title"));
-	var title = titleBlock.split("\"")[2]
+  var titleBlock = data.substring(data.indexOf("xesam:title"));
+  var title = titleBlock.split("\"")[2]
 
-	var artistBlock = data.substring(data.indexOf("xesam:artist"));
-	var artist = artistBlock.split("\"")[2]
+  var artistBlock = data.substring(data.indexOf("xesam:artist"));
+  var artist = artistBlock.split("\"")[2]
 
-	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
-	if(title.includes("-"))
-		title = title.replace("- ", "(") + ")";
+  //If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
+  if (title.includes("-"))
+    title = title.replace("- ", "(") + ")";
 
-	//If the name of either string is too long, cut off and add '...'
-	if (artist.length > this.settings.get_int('max-string-length'))
-		artist = artist.substring(0, this.settings.get_int('max-string-length')) + "...";
+  //If the name of either string is too long, cut off and add '...'
+  if (artist.length > this.settings.get_int('max-string-length'))
+    artist = artist.substring(0, this.settings.get_int('max-string-length')) + "...";
 
-	if (title.length > this.settings.get_int('max-string-length'))
-		title = title.substring(0, this.settings.get_int('max-string-length')) + "...";
+  if (title.length > this.settings.get_int('max-string-length'))
+    title = title.substring(0, this.settings.get_int('max-string-length')) + "...";
 
-	if (title.includes("xesam") || artist.includes("xesam"))
-		return "Loading..."
+  if (title.includes("xesam") || artist.includes("xesam")) {
+    return "Loading...";
+  }
 
-	if (this.settings.get_boolean('artist-first')) {
-    	return (artist + " - " + title);
-  	}
-  	return (title + " - " + artist);
+  let spotifyInfo = [artist, "-", title];
+  if (this.settings.get_boolean('lowercase')) {
+    spotifyInfo = spotifyInfo.map(function (str) {
+      return str.toLowerCase();
+    });
+  }
+
+  if (this.settings.get_boolean('artist-first')) {
+    return spotifyInfo.join(' ');
+  } else {
+    return spotifyInfo.reverse().join(' ');
+  }
 }
 
 function toggleWindow() {
-	if (spotifyWindow && spotifyWindow.has_focus()){ // Spotify is focused
-		if (nonSpotifyWindow)
-			Main.activateWindow(nonSpotifyWindow);
-		// else do nothing
+  if (spotifyWindow && spotifyWindow.has_focus()) { // Spotify is focused
+    if (nonSpotifyWindow)
+      Main.activateWindow(nonSpotifyWindow);
+    // else do nothing
 
-	} else { // Spotify not focused, first press, multiple Spotify windows - all cases
-		nonSpotifyWindow = spotifyWindow = null; // nonSpotifyWindow changes OR another spotifyWindow is active
-		let windowActors = global.get_window_actors();
-		for (let windowActor of windowActors) {
-			if (typeof windowActor.get_meta_window === "function") {
-				if (windowActor.get_meta_window().get_wm_class() === 'Spotify')
-					spotifyWindow = windowActor.get_meta_window();
-				else if (windowActor.get_meta_window().has_focus())
-					nonSpotifyWindow = windowActor.get_meta_window();
+  } else { // Spotify not focused, first press, multiple Spotify windows - all cases
+    nonSpotifyWindow = spotifyWindow = null; // nonSpotifyWindow changes OR another spotifyWindow is active
+    let windowActors = global.get_window_actors();
+    for (let windowActor of windowActors) {
+      if (typeof windowActor.get_meta_window === "function") {
+        if (windowActor.get_meta_window().get_wm_class() === 'Spotify')
+          spotifyWindow = windowActor.get_meta_window();
+        else if (windowActor.get_meta_window().has_focus())
+          nonSpotifyWindow = windowActor.get_meta_window();
 
-				if (spotifyWindow && nonSpotifyWindow) // both found
-					break;
-			}
-		}
-		Main.activateWindow(spotifyWindow); // switch to Spotify
-	}
+        if (spotifyWindow && nonSpotifyWindow) // both found
+          break;
+      }
+    }
+    Main.activateWindow(spotifyWindow); // switch to Spotify
+  }
 }
 
 let genres = ["DnB", "Synthwave", "Dubstep", "Pop", "House", "Hardstyle", "Rock", "8-bit", "Classical", "Electro"]
@@ -277,44 +286,44 @@ let currentGenre = genres[Math.floor(Math.random() * genres.length)];
 let genreChanged = false;
 
 function createGreeting() {
-	if (!this.settings.get_boolean('friendly-greeting'))
-		return ""
+  if (!this.settings.get_boolean('friendly-greeting'))
+    return ""
 
-	var current_hour = new Date().getHours();
+  var current_hour = new Date().getHours();
 
-	if(new Date().getMinutes() % 5 == 0 && !genreChanged) {
-		currentGenre = genres[Math.floor(Math.random() * genres.length)];
-		genreChanged = true;
-	}
-	else if(new Date().getMinutes() % 5 != 0)
-		genreChanged = false;
+  if (new Date().getMinutes() % 5 == 0 && !genreChanged) {
+    currentGenre = genres[Math.floor(Math.random() * genres.length)];
+    genreChanged = true;
+  }
+  else if (new Date().getMinutes() % 5 != 0)
+    genreChanged = false;
 
-	if (current_hour < 4)
-		return "A bit of late night coding and " + currentGenre + " music?";
+  if (current_hour < 4)
+    return "A bit of late night coding and " + currentGenre + " music?";
 
-	else if (current_hour < 7)
-		return "You're up early, get at 'em!"
+  else if (current_hour < 7)
+    return "You're up early, get at 'em!"
 
-	else if (current_hour < 10)
-		return "Start the day properly with some " + currentGenre + " music?";
+  else if (current_hour < 10)
+    return "Start the day properly with some " + currentGenre + " music?";
 
-	else if (current_hour < 12)
-		return "What's todays soundtrack? A bit of " + currentGenre + "?";
+  else if (current_hour < 12)
+    return "What's todays soundtrack? A bit of " + currentGenre + "?";
 
-	else if (current_hour == 12)
-		return "" + currentGenre + " music and bit of lunch?";
+  else if (current_hour == 12)
+    return "" + currentGenre + " music and bit of lunch?";
 
-	else if (current_hour < 15)
-		return "Is that " + currentGenre + " music on the radio? Let's go!";
+  else if (current_hour < 15)
+    return "Is that " + currentGenre + " music on the radio? Let's go!";
 
-	else if (current_hour < 18)
-		return "Isn't work progressing nicely with some " + currentGenre + " music?";
+  else if (current_hour < 18)
+    return "Isn't work progressing nicely with some " + currentGenre + " music?";
 
-	else if (current_hour < 21)
-		return "Free time and " + currentGenre + "? Name a better duo.";
+  else if (current_hour < 21)
+    return "Free time and " + currentGenre + "? Name a better duo.";
 
-	else
-		return "Can " + currentGenre + " be considered a lullaby? Sure!"
+  else
+    return "Can " + currentGenre + " be considered a lullaby? Sure!"
 
 
 }
