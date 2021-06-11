@@ -155,6 +155,23 @@ function buildPrefsWidget() {
     prefsWidget.attach(artistFirstLabel, 0, index, 1, 1);
     prefsWidget.attach(artistFirstSwitch, 1, index, 1, 1);
 
+    /* lowercase */
+    let lowerCaseLabel = new Gtk.Label({
+        label: 'Lowercase:',
+        halign: Gtk.Align.START,
+        visible: true
+    });
+
+    let lowerCaseSwitch = new Gtk.Switch({
+        valign: Gtk.Align.END,
+        halign: Gtk.Align.END,
+        visible: true
+    });
+
+    index++;
+    prefsWidget.attach(lowerCaseLabel, 0, index, 1, 1);
+    prefsWidget.attach(lowerCaseSwitch, 1, index, 1, 1);
+
     /* extension-place */
     let extensionPlaceLabel = new Gtk.Label({
         label: 'Extension place:',
@@ -221,6 +238,7 @@ function buildPrefsWidget() {
     settings.bind('refresh-rate', refreshRateEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('friendly-greeting', friendlyGreetingSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('artist-first', artistFirstSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind('lowercase', lowerCaseSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('toggle-window', toggleWindowSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     extensionPlaceComboBox.connect('changed', Lang.bind(this, function(widget) {
         settings.set_string('extension-place', options[widget.get_active()]);
