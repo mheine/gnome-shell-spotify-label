@@ -222,11 +222,13 @@ function parseSpotifyData(data) {
 	if(!data)
 		return createGreeting()
 
-	var titleBlock = data.substring(data.indexOf("xesam:title"));
-	var title = titleBlock.split("\"")[2]
+	var re = RegExp('string \".*(?=\"\n)');
 
+	var titleBlock = data.substring(data.indexOf("xesam:title"));
+	var title = titleBlock.match(re)[0].substring(8);
+		
 	var artistBlock = data.substring(data.indexOf("xesam:artist"));
-	var artist = artistBlock.split("\"")[2]
+	var artist = artistBlock.match(re)[0].substring(8);
 
 	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
 	if(title.includes("-"))
