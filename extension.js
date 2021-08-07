@@ -230,6 +230,9 @@ function parseSpotifyData(data) {
 	var artistBlock = data.substring(data.indexOf("xesam:artist"));
 	var artist = artistBlock.match(re)[0].substring(8);
 
+	if (title.includes("xesam") || artist.includes("xesam"))
+		return "Loading..."
+
 	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
 	if(title.includes("-"))
 		title = title.replace("- ", "(") + ")";
@@ -240,9 +243,6 @@ function parseSpotifyData(data) {
 
 	if (title.length > this.settings.get_int('max-string-length'))
 		title = title.substring(0, this.settings.get_int('max-string-length')) + "...";
-
-	if (title.includes("xesam") || artist.includes("xesam"))
-		return "Loading..."
 
 	if (this.settings.get_boolean('artist-first')) {
     	return (artist + " - " + title);
