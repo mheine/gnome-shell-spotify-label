@@ -65,11 +65,11 @@ const SpotifyLabel = new Lang.Class({
 	// Update padding of this.buttonText according to new value set in settings
 	_leftPaddingChanged: function() {
 		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
-				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
+								+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
 	},
 	_rightPaddingChanged: function() {
 		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
-				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
+								+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
 	},
 
 	// Update labelEventListener if toggle mode changes
@@ -140,14 +140,14 @@ function enable() {
 
 	// Load schema
 	gschema = Gio.SettingsSchemaSource.new_from_directory(
-        Me.dir.get_child('schemas').get_path(),
-        Gio.SettingsSchemaSource.get_default(),
-        false
-    );
+		Me.dir.get_child('schemas').get_path(),
+		Gio.SettingsSchemaSource.get_default(),
+		false
+	);
 
 	// Load settings
-    settings = new Gio.Settings({
-        settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
+	settings = new Gio.Settings({
+		settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
 	});
 
 	// Mandatory for removing the spMenu from the correct location
@@ -226,7 +226,7 @@ function parseSpotifyData(data) {
 
 	var titleBlock = data.substring(data.indexOf("xesam:title"));
 	var title = titleBlock.match(re)[0].substring(8);
-		
+
 	var artistBlock = data.substring(data.indexOf("xesam:artist"));
 	var artist = artistBlock.match(re)[0].substring(8);
 
@@ -245,9 +245,9 @@ function parseSpotifyData(data) {
 		title = title.substring(0, this.settings.get_int('max-string-length')) + "...";
 
 	if (this.settings.get_boolean('artist-first')) {
-    	return (artist + " - " + title);
-  	}
-  	return (title + " - " + artist);
+		return (artist + " - " + title);
+	}
+	return (title + " - " + artist);
 }
 
 function toggleWindow() {
@@ -317,6 +317,4 @@ function createGreeting() {
 
 	else
 		return "Can " + currentGenre + " be considered a lullaby? Sure!"
-
-
 }
