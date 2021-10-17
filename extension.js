@@ -228,9 +228,12 @@ function parseSpotifyData(data) {
 	var artistBlock = data.substring(data.indexOf("xesam:artist"));
 	var artist = artistBlock.split("\"")[2]
 
-	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
-	if(title.includes("-"))
-		title = title.replace("- ", "(") + ")";
+	//Replaces every instance of " | "
+	if(title.includes(" | "))
+		title = title.replace(/ \| /g, " / ");
+
+	if(artist.includes(" | "))
+		artist = artist.replace(/ \| /g," / ");
 
 	//If the name of either string is too long, cut off and add '...'
 	if (artist.length > this.settings.get_int('max-string-length'))
@@ -242,10 +245,10 @@ function parseSpotifyData(data) {
 	if (title.includes("xesam") || artist.includes("xesam"))
 		return "Loading..."
 
-	if (this.settings.get_boolean('artist-first')) {
-    	return (artist + " - " + title);
-  	}
-  	return (title + " - " + artist);
+	if (this.settings.get_boolean('artist-first'))
+		return (artist + " | " + title);
+
+	return (title + " | " + artist);
 }
 
 function toggleWindow() {
