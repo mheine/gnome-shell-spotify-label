@@ -233,11 +233,15 @@ function parseSpotifyData(data) {
 		title = title.replace("- ", "(") + ")";
 
 	//If the name of either string is too long, cut off and add '...'
-	if (artist.length > this.settings.get_int('max-string-length'))
-		artist = artist.substring(0, this.settings.get_int('max-string-length')) + "...";
+	if (artist.length > this.settings.get_int('max-string-length')){
+		artist = artist.substring(0, this.settings.get_int('max-string-length'));
+		artist = artist.substring(0, artist.lastIndexOf(" ")) + "...";
+	}
 
-	if (title.length > this.settings.get_int('max-string-length'))
-		title = title.substring(0, this.settings.get_int('max-string-length')) + "...";
+	if (title.length > this.settings.get_int('max-string-length')){
+		title = title.substring(0, this.settings.get_int('max-string-length'));
+		title = title.substring(0, title.lastIndexOf(" ")) + "...";
+	}
 
 	if (title.includes("xesam") || artist.includes("xesam"))
 		return "Loading..."
