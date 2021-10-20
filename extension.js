@@ -228,8 +228,8 @@ function parseSpotifyData(data) {
 	var artistBlock = data.substring(data.indexOf("xesam:artist"));
 	var artist = artistBlock.split("\"")[2]
 
-	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
-	if(title.includes("-"))
+	//If the delimited ' - '(with spaces) is in the title, we assume that it's remix, and encapsulate the end in brackets.
+	if(title.includes(" - "))
 		title = title.replace("- ", "(") + ")";
 
 	//If the name of either string is too long, cut off and add '...'
