@@ -7,6 +7,10 @@ const Lang = imports.lang;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
+const Config = imports.misc.config;
+const [major] = Config.PACKAGE_VERSION.split('.');
+const shellVersion = Number.parseInt(major);
+
 function init() {
 }
 
@@ -22,14 +26,28 @@ function buildPrefsWidget() {
         settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
     });
 
-    let prefsWidget = new Gtk.Grid({
-        margin: 18,
-        column_spacing: 12,
-        row_spacing: 12,
-        visible: true,
-        column_homogeneous: true,
-    });
-
+    let prefsWidget;
+    if (shellVersion < 40) {
+        prefsWidget = new Gtk.Grid({
+            margin: 18,
+            column_spacing: 12,
+            row_spacing: 12,
+            visible: true,
+            column_homogeneous: true,
+        });
+    } else {
+        prefsWidget = new Gtk.Grid({
+            margin_top: 10,
+            margin_bottom: 10,
+            margin_start: 10,
+            margin_end: 10,
+            column_spacing: 12,
+            row_spacing: 12,
+            visible: true,
+            column_homogeneous: true,
+        });
+    }
+    
     let index = 0;
 
     let title = new Gtk.Label({
