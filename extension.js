@@ -9,26 +9,29 @@ const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
+const GObject = imports.gi.GObject;
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-let LEFT_PADDING, RIGHT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST, EXTENSION_PLACE, EXTENSION_INDEX, TOGGLE_WINDOW, gschema, lastExtensionPlace, lastExtensionIndex;
+let LEFT_PADDING, RIGHT_PADDING, MAX_STRING_LENGTH, REFRESH_RATE, FRIENDLY_GREETING, ARTIST_FIRST, EXTENSION_PLACE, EXTENSION_INDEX, TOGGLE_WINDOW, gschema;
+var lastExtensionPlace, lastExtensionIndex;
 var settings, onLeftPaddingChanged, onRightPaddingChanged, onExtensionPlaceChanged, onExtensionIndexChanged, onToggleModeChanged;
 let _httpSession;
 let spMenu;
 
-const SpotifyLabel = new Lang.Class({
-	Name: 'SpotifyLabel',
-	Extends: PanelMenu.Button,
+var spotifyWindow, nonSpotifyWindow; // used by the switcher
 
-	_init: function (settings) {
-		this.parent(0.0, "Spotify Label", false);
+const SpotifyLabel = GObject.registerClass({
+	Name: 'SpotifyLabel',
+}, class SpotifyLabell extends PanelMenu.Button {
+	_init(settings) {
+		super._init(0.0, "Spotify Label", false);
 
 		this.settings = settings;
 
 		this.buttonText = new St.Label({
 			text: _("Loading..."),
 			style: "padding-left: " + this.settings.get_int('left-padding') + "px;"
-				 + "padding-right: " + this.settings.get_int('right-padding') + "px; ",
+				+ "padding-right: " + this.settings.get_int('right-padding') + "px; ",
 			y_align: Clutter.ActorAlign.CENTER,
 			x_align: Clutter.ActorAlign.FILL
 		});
@@ -53,51 +56,51 @@ const SpotifyLabel = new Lang.Class({
 		// Create a new layout, add the text and add the actor to the layout
 		let topBox = new St.BoxLayout();
 		topBox.add(this.buttonText);
-		this.actor.add_actor(topBox);
+		this.add_actor(topBox);
 
 		//Place the actor/label at the "end" (rightmost) position within the left box
-		children = Main.panel._leftBox.get_children();
-		Main.panel._leftBox.insert_child_at_index(this.actor, children.length)
+		let children = Main.panel._leftBox.get_children();
+		Main.panel._leftBox.insert_child_at_index(this, children.length);
 
 		this._refresh();
-	},
+	}
 
 	// Update padding of this.buttonText according to new value set in settings
-	_leftPaddingChanged: function() {
+	_leftPaddingChanged() {
 		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
-				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
-	},
-	_rightPaddingChanged: function() {
+			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
+	}
+	_rightPaddingChanged() {
 		this.buttonText.set_style("padding-left: " + this.settings.get_int('left-padding') + "px; "
-				    			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
-	},
+			+ "padding-right: " + this.settings.get_int('right-padding') + "px; ");
+	}
 
 	// Update labelEventListener if toggle mode changes
-	_toggleModeChanged: function () {
+	_toggleModeChanged() {
 		spotifyWindow = nonSpotifyWindow = null;
 		if (settings.get_boolean('toggle-window')) {
-			this.toggleModeID = this.actor.connect('button-press-event', toggleWindow);
+			this.toggleModeID = this.connect('button-press-event', toggleWindow);
 		} else {
-			this.actor.disconnect(this.toggleModeID);
+			this.disconnect(this.toggleModeID);
 		}
-	},
+	}
 
 	//Defind the refreshing function and set the timeout in seconds
-	_refresh: function () {
+	_refresh() {
 		this._loadData(this._refreshUI);
 		this._removeTimeout();
 		this._timeout = Mainloop.timeout_add_seconds(this.settings.get_int('refresh-rate'), Lang.bind(this, this._refresh));
 		return true;
-	},
+	}
 
-	_loadData: function () {
+	_loadData() {
 
 		let [res, out, err, status] = [];
 		try {
 			//Use GLib to send a dbus request with the expectation of receiving an MPRIS v2 response.
 			[res, out, err, status] = GLib.spawn_command_line_sync("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:org.mpris.MediaPlayer2.Player string:Metadata");
 		}
-		catch(err) {
+		catch (err) {
 			this._refreshUI("Error. Please check system logs.");
 			global.log("spotifylabel: res: " + res + " -- status: " + status + " -- err:" + err);
 			return;
@@ -105,21 +108,21 @@ const SpotifyLabel = new Lang.Class({
 
 		var labelstring = parseSpotifyData(out.toString());
 		this._refreshUI(labelstring);
-	},
+	}
 
-	_refreshUI: function (data) {
+	_refreshUI(data) {
 		let txt = data.toString();
 		this.buttonText.set_text(txt);
-	},
+	}
 
-	_removeTimeout: function () {
+	_removeTimeout() {
 		if (this._timeout) {
 			Mainloop.source_remove(this._timeout);
 			this._timeout = null;
 		}
-	},
+	}
 
-	stop: function () {
+	stop() {
 		if (_httpSession !== undefined)
 			_httpSession.abort();
 		_httpSession = undefined;
@@ -130,24 +133,22 @@ const SpotifyLabel = new Lang.Class({
 
 		this.menu.removeAll();
 	}
-}
-);
+});
 
 function init() {
 }
 
 function enable() {
-
 	// Load schema
 	gschema = Gio.SettingsSchemaSource.new_from_directory(
-        Me.dir.get_child('schemas').get_path(),
-        Gio.SettingsSchemaSource.get_default(),
-        false
-    );
+		Me.dir.get_child('schemas').get_path(),
+		Gio.SettingsSchemaSource.get_default(),
+		false
+	);
 
 	// Load settings
-    settings = new Gio.Settings({
-        settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
+	settings = new Gio.Settings({
+		settings_schema: gschema.lookup('org.gnome.shell.extensions.spotifylabel', true)
 	});
 
 	// Mandatory for removing the spMenu from the correct location
@@ -163,8 +164,6 @@ function enable() {
 		'changed::extension-index',
 		this.onExtensionLocationChanged.bind(this)
 	);
-
-	let spotifyWindow, nonSpotifyWindow; // used by the switcher - greyed out in most editors
 
 	spMenu = new SpotifyLabel(settings);
 	Main.panel.addToStatusArea('sp-indicator', spMenu, settings.get_int('extension-index'), settings.get_string('extension-place'));
@@ -182,12 +181,12 @@ function disable() {
 }
 
 // Removes spMenu from correct location and then adds it to new one
-function onExtensionLocationChanged (settings, key) {
+function onExtensionLocationChanged(settings, key) {
 	const newExtensionPlace = this.settings.get_string('extension-place');
 	const newExtensionIndex = this.settings.get_int('extension-index');
 
 	if (this.lastExtensionPlace !== newExtensionPlace
-			|| this.lastExtensionIndex !== newExtensionIndex) {
+		|| this.lastExtensionIndex !== newExtensionIndex) {
 
 		switch (this.lastExtensionPlace) {
 			case 'left':
@@ -219,7 +218,7 @@ function onExtensionLocationChanged (settings, key) {
 //Spotify uses MIPRIS v2, and as such the metadata fields are prefixed by 'xesam'
 //We use this info to set our limits,and assume the data is properly escaped within quotes.
 function parseSpotifyData(data) {
-	if(!data)
+	if (!data)
 		return createGreeting()
 
 	var titleBlock = data.substring(data.indexOf("xesam:title"));
@@ -229,7 +228,7 @@ function parseSpotifyData(data) {
 	var artist = artistBlock.split("\"")[2]
 
 	//If the delimited '-' is in the title, we assume that it's remix, and encapsulate the end in brackets.
-	if(title.includes("-"))
+	if (title.includes("-"))
 		title = title.replace("- ", "(") + ")";
 
 	//If the name of either string is too long, cut off and add '...'
@@ -243,13 +242,13 @@ function parseSpotifyData(data) {
 		return "Loading..."
 
 	if (this.settings.get_boolean('artist-first')) {
-    	return (artist + " - " + title);
-  	}
-  	return (title + " - " + artist);
+		return (artist + " - " + title);
+	}
+	return (title + " - " + artist);
 }
 
 function toggleWindow() {
-	if (spotifyWindow && spotifyWindow.has_focus()){ // Spotify is focused
+	if (spotifyWindow && spotifyWindow.has_focus()) { // Spotify is focused
 		if (nonSpotifyWindow)
 			Main.activateWindow(nonSpotifyWindow);
 		// else do nothing
@@ -282,11 +281,11 @@ function createGreeting() {
 
 	var current_hour = new Date().getHours();
 
-	if(new Date().getMinutes() % 5 == 0 && !genreChanged) {
+	if (new Date().getMinutes() % 5 == 0 && !genreChanged) {
 		currentGenre = genres[Math.floor(Math.random() * genres.length)];
 		genreChanged = true;
 	}
-	else if(new Date().getMinutes() % 5 != 0)
+	else if (new Date().getMinutes() % 5 != 0)
 		genreChanged = false;
 
 	if (current_hour < 4)
